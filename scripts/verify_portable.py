@@ -1,7 +1,7 @@
-"""便携包验收检查（自动化第一层，对应既有约定）。
+"""便携包验收检查（自动化第一层）。
 
 对构建产物做不需要人工介入的检查：结构、预设与规格表一致性、许可文档、运行时隔离。
-人工清单见既有约定。
+人工验收覆盖断网、非管理员、中文/空格路径、只读目录等脚本替不了的场景。
 
 用法：
     python scripts/verify_portable.py                      # 检查 dist/staging
@@ -111,6 +111,14 @@ def check_presets(package: Path) -> list[str]:
         sheet = preset.get("sheet")
         if sheet is not None and sheet not in sizes:
             problems.append(f"预设 {pid} 的相纸「{sheet}」不在 size_zh.csv 中")
+
+        # 输出模式属于预设层的数据契约：不合法或自相矛盾都要在这里挡住，
+        # 而不是等页面把排版按钮点成灰色让用户猜。
+        mode = preset.get("mode")
+        if mode is not None and mode not in ("single", "sheet"):
+            problems.append(f"预设 {pid} 的输出模式「{mode}」不是 single/sheet")
+        if mode == "sheet" and not sheet:
+            problems.append(f"预设 {pid} 声明 sheet 却没有相纸，切到排版会没有纸可选")
 
         layout = preset.get("layout")
         if not layout:
@@ -289,7 +297,7 @@ def main(argv: list[str]) -> int:
         print(f"结论：FAIL，共 {len(failures)} 项问题")
         return 1
     print("结论：PASS")
-    print("注意：断网、非管理员、中文/空格路径、只读目录等场景仍需按既有约定人工确认。")
+    print("注意：断网、非管理员、中文/空格路径、只读目录等场景仍需人工确认。")
     return 0
 
 

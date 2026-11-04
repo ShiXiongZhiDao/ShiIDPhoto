@@ -12,6 +12,8 @@
 
 - **拖入即用**：拖一张照片，选规格与底色，生成电子版或相纸排版。
 - **本地处理**：照片与模型都在本机，不经过远端服务。
+- **记住选择**：规格、底色、输出模式、相纸、自定义尺寸与格式/质量/体积上限跟着包走，
+  刷新或重开还在。
 - **首次向导**：不带模型的瘦包在页面里下载缺失模型，支持断点续传、暂停/继续、手动安装。
 - **自定义尺寸**：像素或毫米 + DPI 二选一，常用规格可保存。
 - **输出可控**：JPG / JPEG / PNG，四档质量，可设体积上限。
@@ -74,6 +76,9 @@ python scripts\build_portable.py --tier personal --no-models
 ## 使用说明
 
 见 [`docs/PORTABLE_USER_GUIDE.md`](docs/PORTABLE_USER_GUIDE.md)。
+
+版本变化见 [`CHANGELOG.md`](CHANGELOG.md)；发行包见
+[Releases](https://github.com/ShiXiongZhiDao/ShiIDPhoto/releases)。
 
 ## 参与
 

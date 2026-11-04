@@ -3,7 +3,7 @@
   "product_name": "ShiIDPhoto",
   "product_title": "师兄证照",
   "product_tagline": "证件照便携版",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "platform": "windows-x64",
   "distribution": {
     "tier": "personal",

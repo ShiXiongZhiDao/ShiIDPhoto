@@ -37,12 +37,16 @@ const state = {
   size: '一寸',
   color: '白色',
   sheet: '六寸',
-  mode: 'sheet',
+  mode: 'single',
   file: null,
   result: null,
   selected: 'single',
   dirty: false,
   busy: false,
+  customSizeId: '',
+  presetSource: 'config',
+  prefsSaved: false,
+  prefsNotes: [],
   layout: { rows: 4, cols: 4, count: 16, util: 0.9 },
 };
 
@@ -94,6 +98,112 @@ function wireModalDismiss(el) {
   });
 }
 
+/* ---------------- 记住选择---------------- */
+/* 存服务端 user-data/prefs.json，不存浏览器：localStorage 的 origin 含端口，
+   而启动器在端口被占时会往后漂（7860→7862），一漂那份记忆就等于没有。
+   校验只在服务端一处（shell/prefs.py），前端只念结果——两套规则一定会漂移。 */
+let prefsWarn = '';
+
+function collectPrefs() {
+  return {
+    size: state.size,
+    background: state.color,
+    mode: state.mode,
+    sheet: state.sheet,
+    custom_size_id: state.size === CUSTOM_KEY ? state.customSizeId : '',
+    format: $('fmtSel').value,
+    quality: $('qualitySel').value,
+    max_kb: $('maxKb').value,
+    max_kb_on: $('maxKbOn').checked,
+  };
+}
+
+/* 旧浏览器键只读一次做迁移，不删（既有约定：删/改这些键等于悄悄把用户偏好恢复成默认） */
+function legacyPrefs() {
+  const out = {};
+  const fmt = localStorage.getItem('idphoto.fmt');
+  const quality = localStorage.getItem('idphoto.quality');
+  const kb = localStorage.getItem('idphoto.maxkb');
+  const on = localStorage.getItem('idphoto.maxkbOn');
+  if (fmt) out.format = fmt;
+  if (quality) out.quality = quality;
+  if (kb) out.max_kb = kb;
+  if (on !== null) out.max_kb_on = on === '1';
+  return out;
+}
+
+function renderPrefsWarn() {
+  const el = $('prefsWarn');
+  if (!el) return;
+  const lines = [prefsWarn, ...state.prefsNotes].filter(Boolean);
+  el.textContent = lines.join(' ');
+  el.hidden = lines.length === 0;
+}
+
+async function savePrefs(extra) {
+  const body = { ...collectPrefs(), ...(extra || {}) };
+  try {
+    const r = await fetch('/api/prefs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok || !data.ok) {
+      prefsWarn = data.error || ('设置存不下来（HTTP ' + r.status + '）');
+    } else {
+      prefsWarn = '';
+      state.prefsNotes = data.prefs_notes || [];
+      state.prefsSaved = true;
+    }
+  } catch (err) {
+    prefsWarn = '设置存不下来：本地服务没有响应';
+  }
+  renderPrefsWarn();
+}
+
+function applyPrefs(data) {
+  const p = data.prefs;
+  if (!p) return;
+  state.prefsNotes = data.prefs_notes || [];
+  state.prefsSaved = !!data.prefs_saved;
+  state.presetSource = data.preset_source || 'config';
+
+  // 输出三项不由预设定义，任何时候都听记忆的
+  $('fmtSel').value = p.format;
+  $('qualitySel').value = p.quality;
+  $('maxKb').value = String(p.max_kb === null || p.max_kb === undefined ? 100 : p.max_kb);
+  $('maxKbOn').checked = !!p.max_kb_on;
+  maxKbWanted = !!p.max_kb_on;
+  $('footFmt').textContent = p.format.toUpperCase();
+  syncSizeControls();
+
+  // 启动参数赢，且这一次不写回记忆（Q5）：预设定义的四个字段不听记忆的
+  if (state.presetSource === 'cli') return;
+
+  state.sheet = p.sheet;
+  state.color = p.background;
+  state.mode = p.mode;
+  if (p.size === CUSTOM_KEY) {
+    const item = (state.customSizes || []).find(x => x.id === p.custom_size_id);
+    if (item) {
+      state.customDraft = {
+        w: item.width, h: item.height, dpi: item.dpi,
+        mm_w: item.mm_w || 0, mm_h: item.mm_h || 0, name: item.name,
+      };
+      state.customSizeId = item.id;
+      state.size = CUSTOM_KEY;
+    } else {
+      state.size = p.size;
+    }
+  } else {
+    state.size = p.size;
+  }
+  $('modes').querySelectorAll('button')
+    .forEach(b => b.classList.toggle('on', b.dataset.mode === state.mode));
+  syncMode();
+}
+
 /* ---------------- 步骤引导 ---------------- */
 /* 文案只有 GUIDE_STEPS 这一处：常驻清单和手动触发的分步引导都从它渲染。
    写两遍就会漂移——上一轮刚为这件事立了测试（不许两处各说一套）。
@@ -131,6 +241,12 @@ function renderRail() {
 
 /* 拍照要求那两行：只在还没放照片时出现，那时它才是"事前"的。
    与引导卡片共用 GUIDE_STEPS[0].hints 这一处文案。 */
+/* 单张是默认，输出区就不该再摆着相纸下拉、排版行数和那张相纸缩略图。
+   收起来而不是删掉：切到「相纸排版」它们必须原样回来，排版能力本身一点没动。 */
+function syncMode() {
+  document.body.classList.toggle('mode-single', state.mode !== 'sheet');
+}
+
 function renderHints() {
   const box = $('dzHints');
   if (!box) return;
@@ -446,6 +562,7 @@ function renderColors() {
       state.color = el.dataset.color;
       syncColorActive();
       markDirty();
+      savePrefs();
     });
   });
   syncColorActive();
@@ -492,10 +609,12 @@ function recomputeLayout() {
 
 function selectSize(name) {
   state.size = name;
+  if (name !== CUSTOM_KEY) state.customSizeId = '';
   syncSpecActive();
   $('moreSpecs').value = '';
   recomputeLayout();
   markDirty();
+  savePrefs();
 }
 
 function markDirty() {
@@ -875,7 +994,10 @@ function renderCustomList() {
   });
 }
 
+let cmEditingId = '';
+
 function openCustom(item) {
+  cmEditingId = item ? item.id : '';
   showCmError('');
   renderCustomList();
 
@@ -922,10 +1044,12 @@ function applyCustom() {
     name: $('cmName').value.trim(),
   };
   state.size = CUSTOM_KEY;
+  state.customSizeId = cmEditingId;   // 没保存过的临时尺寸是空串：重启后回默认并说明
   closeCustom();
   renderSpecs();
   recomputeLayout();
   markDirty();
+  savePrefs();
 }
 
 async function saveCustom() {
@@ -946,6 +1070,8 @@ async function saveCustom() {
     }).then(x => x.json());
     if (!r.ok) throw new Error(r.error || '保存失败');
     state.customSizes = r.sizes || [];
+    const made = (r.sizes || []).find(x => x.width === f.pxW && x.height === f.pxH);
+    if (made) cmEditingId = made.id;
     applyCustom();
     toast('已保存这个尺寸');
   } catch (err) {
@@ -1089,6 +1215,8 @@ function bind() {
   $('modes').querySelectorAll('button').forEach(btn => {
     btn.addEventListener('click', () => {
       state.mode = btn.dataset.mode;
+      syncMode();
+      savePrefs();
       $('modes').querySelectorAll('button').forEach(b => b.classList.toggle('on', b === btn));
       markDirty();
     });
@@ -1098,6 +1226,7 @@ function bind() {
     state.sheet = e.target.value;
     recomputeLayout();
     markDirty();
+    savePrefs();
   });
 
   $('moreSpecs').addEventListener('change', e => {
@@ -1120,33 +1249,26 @@ function bind() {
   });
 
   $('dl').addEventListener('click', download);
-  $('fmtSel').value = localStorage.getItem('idphoto.fmt') || 'jpg';
-  $('qualitySel').value = localStorage.getItem('idphoto.quality') || 'high';
-  $('maxKb').value = localStorage.getItem('idphoto.maxkb') || '100';
-  $('maxKbOn').checked = localStorage.getItem('idphoto.maxkbOn') === '1';
-  maxKbWanted = $('maxKbOn').checked;
-  $('footFmt').textContent = $('fmtSel').value.toUpperCase();
-  syncSizeControls();
-
+  // 输出三项的初值由 boot 里的 applyPrefs 从服务端恢复，这里不再各读一套介质
   $('fmtSel').addEventListener('change', () => {
-    localStorage.setItem('idphoto.fmt', $('fmtSel').value);
     $('footFmt').textContent = $('fmtSel').value.toUpperCase();
     syncSizeControls();
+    savePrefs();
   });
   $('qualitySel').addEventListener('change', () => {
-    localStorage.setItem('idphoto.quality', $('qualitySel').value);
+    savePrefs();
   });
   $('maxKbOn').addEventListener('change', () => {
     maxKbWanted = $('maxKbOn').checked;
-    localStorage.setItem('idphoto.maxkbOn', maxKbWanted ? '1' : '0');
     syncSizeControls();
+    savePrefs();
   });
   $('maxKb').addEventListener('change', () => {
     // 夹到服务端接受的区间，避免输错后请求被 400 打回却看不出原因
     const raw = Number($('maxKb').value);
     const clamped = Math.min(8192, Math.max(20, Number.isFinite(raw) ? Math.round(raw) : 100));
     $('maxKb').value = String(clamped);
-    localStorage.setItem('idphoto.maxkb', String(clamped));
+    savePrefs();
   });
   $('openFolder').addEventListener('click', async () => {
     const r = await API.openFolder();
@@ -1257,7 +1379,8 @@ async function waitForService() {
       state.size = preset.size;
       state.color = preset.background;
       state.sheet = preset.sheet || state.catalog.sheets[0].name;
-      state.mode = preset.sheet ? 'sheet' : 'single';
+      // 输出模式以预设声明为准；没声明才按「有没有相纸」推断，老预设语义不变
+      state.mode = preset.mode || (preset.sheet ? 'sheet' : 'single');
       $('modes').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.mode === state.mode));
     } else if (state.catalog.photos.length) {
       state.size = state.catalog.photos[0].name;
@@ -1266,6 +1389,8 @@ async function waitForService() {
     }
     $('addr').textContent = location.host;
 
+    applyPrefs(data);
+    syncMode();
     renderRail();
     renderHints();      // 清单先出骨架，后面 renderSpecs/renderColors 才会算到它
     renderSpecs();
@@ -1277,6 +1402,12 @@ async function waitForService() {
     $('sub').textContent = '先拖入一张照片';
     setStatus('模型已就绪', '');
     renderSteps();
+    renderPrefsWarn();
+    // 第一次（服务端什么都没存过）把旧浏览器键搬过去；旧键不删
+    if (!state.prefsSaved) {
+      const legacy = legacyPrefs();
+      if (Object.keys(legacy).length) savePrefs(legacy);
+    }
 
     $('overlay').classList.remove('on', 'boot');
     document.body.classList.remove('booting');

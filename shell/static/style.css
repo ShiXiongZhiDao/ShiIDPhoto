@@ -454,6 +454,13 @@ body.booting .canvas-foot{opacity:.28;pointer-events:none;transition:opacity .25
 .tour-actions .primary{width:auto;flex:none;height:32px;padding:0 16px;font-size:12.5px}
 .tour-actions .ghost{height:32px;padding:0 12px;font-size:12px}
 
+.prefs-warn{margin:0 0 10px;padding:8px 10px;border:1px solid rgba(227,176,75,.35);
+  border-radius:8px;background:rgba(227,176,75,.08);font-size:11px;line-height:1.6;color:#F0D6A2}
+.prefs-warn[hidden]{display:none}
+
+/* 单张模式下收掉相纸专属的三处控件（相纸下拉 / 排版行数 / 相纸缩略图） */
+body.mode-single [data-sheet-only]{display:none}
+
 /* 「怎么做」标题行右侧那颗入口；h3 的 ::after 已经把线撑满，按钮自然贴右 */
 .sec>h3 .mini{flex:none;font-size:10.5px;letter-spacing:.04em;text-transform:none;
   color:var(--accent);border:1px solid rgba(227,176,75,.35);border-radius:999px;

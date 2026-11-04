@@ -43,6 +43,7 @@ import assets  # noqa: E402  (依赖上面的 sys.path)
 import contracts  # noqa: E402
 import custom_sizes  # noqa: E402
 import imaging  # noqa: E402
+import prefs  # noqa: E402
 
 STATIC_DIR = SHELL_DIR / "static"
 APP_PY = ROOT / "src" / "webui" / "app.py"
@@ -52,6 +53,8 @@ INPUT_DIR = ROOT / "user-data" / "input"
 LOG_DIR = ROOT / "user-data" / "logs"
 # 自定义规格是用户数据，和模型一样不进 config/（覆盖安装会被替换）
 CUSTOM_PATH = ROOT / "user-data" / "custom-sizes.json"
+# 界面选择也进 user-data：浏览器那份按端口分桶，端口一漂就等于没有
+PREFS_PATH = ROOT / "user-data" / "prefs.json"
 
 # 前端用这个伪规格名表示"这次用自定义尺寸"，不会与 CSV 里的中文名冲突
 CUSTOM_SIZE_KEY = "__custom__"
@@ -649,6 +652,34 @@ class Server(ThreadingHTTPServer):
         super().server_bind()
 
 
+def prefs_view(catalog: dict, custom_items: list[dict]) -> tuple[dict, list[str], bool]:
+    """当前生效的界面选择 + 每一条回退原因 + 磁盘上是否真有存过。
+
+    默认值取自已解析的预设（`--preset` 已经在这条链上生效），
+    所以"没存过"和"存过但失效"都落回同一个地方，不会出现第二套默认。
+    """
+    raw, note = prefs.load(PREFS_PATH)
+    if note:
+        log(f"[偏好] {note}")
+    presets = PRESETS.get("presets", [])
+    preset = next((x for x in presets if x.get("id") == DEFAULT_PRESET_ID), None) or (presets[0] if presets else {})
+    sheets = catalog.get("sheets") or []
+    defaults = {
+        "size": preset.get("size"),
+        "background": preset.get("background"),
+        "sheet": preset.get("sheet") or (sheets[0]["name"] if sheets else None),
+        "mode": preset.get("mode") or ("sheet" if preset.get("sheet") else "single"),
+        "format": "jpg",
+        "quality": "high",
+        "max_kb": 100,
+        "max_kb_on": False,
+    }
+    clean, notes = prefs.normalize(raw, catalog, {x["id"] for x in custom_items}, defaults)
+    if note:
+        notes.insert(0, note)
+    return clean, notes, bool(raw)
+
+
 class Handler(BaseHTTPRequestHandler):
     server_version = "photo/1.0"  # 真实值由 set_brand() 按 config 覆写
     upstream: Upstream | None = None
@@ -727,6 +758,7 @@ class Handler(BaseHTTPRequestHandler):
                 custom, custom_note = custom_sizes.load(CUSTOM_PATH)
                 if custom_note:
                     log(f"[自定义规格] {custom_note}")
+                clean_prefs, prefs_notes, prefs_saved = prefs_view(self.upstream.catalog(), custom)
                 self.send_json({
                     "ok": True,
                     "mode": "ready",
@@ -740,6 +772,13 @@ class Handler(BaseHTTPRequestHandler):
                     "presets": PRESETS.get("presets", []),
                     # 已按 启动参数 > defaults.id > 第一条 解析过，前端不需要再猜
                     "default_preset": DEFAULT_PRESET_ID,
+                    # 界面选择：服务端是唯一校验点，前端只念结果
+                    "prefs": clean_prefs,
+                    "prefs_notes": prefs_notes,
+                    "prefs_saved": prefs_saved,
+                    # 页面分不清预设是启动参数给的还是配置默认的，就没法执行
+                    # "启动参数赢且不写回"——这个字段就是为了让它可执行
+                    "preset_source": "cli" if os.environ.get("IDPHOTO_PRESET") else "config",
                 })
             except Exception as exc:  # noqa: BLE001
                 log(traceback.format_exc())
@@ -881,6 +920,32 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json({"ok": True, "size": spec, "sizes": items})
             except Exception as exc:  # noqa: BLE001
                 log(f"[自定义规格] 保存失败：{exc}")
+                self.send_json({"ok": False, "error": str(exc)}, 400)
+            return
+
+        if path == "/api/prefs":
+            try:
+                length = int(self.headers.get("Content-Length") or 0)
+                if length <= 0 or length > 64 * 1024:
+                    raise ValueError("请求体为空或过大")
+                doc = json.loads(self.rfile.read(length).decode("utf-8"))
+                if not isinstance(doc, dict):
+                    raise ValueError("请求体必须是 JSON 对象")
+                catalog = self.upstream.catalog()
+                custom, _ = custom_sizes.load(CUSTOM_PATH)
+                clean, _notes, _saved = prefs_view(catalog, custom)
+                raw = {k: doc[k] for k in prefs.FIELDS if k in doc}
+                saved_prefs, notes = prefs.normalize(raw, catalog, {x["id"] for x in custom}, clean)
+                try:
+                    prefs.save(PREFS_PATH, saved_prefs)
+                except OSError as exc:
+                    # 存不下来不影响出片，但必须看得见
+                    self.send_json({"ok": False, "error": f"设置存不下来：{exc}",
+                                    "prefs": saved_prefs, "prefs_notes": notes}, 500)
+                    return
+                self.send_json({"ok": True, "prefs": saved_prefs, "prefs_notes": notes})
+            except Exception as exc:  # noqa: BLE001
+                log(f"[偏好] 保存失败：{exc}")
                 self.send_json({"ok": False, "error": str(exc)}, 400)
             return
 

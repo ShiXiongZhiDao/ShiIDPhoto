@@ -14,6 +14,8 @@ registry writes, no admin requirements, and no background service.
 - **Drag and go**: drop in a photo, pick a size and background color, and generate a digital
   copy or a print sheet.
 - **Local processing**: photos and models stay on your machine; no remote service is involved.
+- **Remembered choices**: size, background, output mode, sheet, custom size, and output settings
+  are stored with the package and restored after a refresh or restart.
 - **First-run setup**: the slim package downloads missing models in the page, with resume,
   pause/continue, and manual install.
 - **Custom sizes**: enter pixels, or millimeters plus DPI; save frequently used sizes.
@@ -81,6 +83,9 @@ the official model repositories and verifies each SHA256.
 ## User guide
 
 See [`docs/PORTABLE_USER_GUIDE.md`](docs/PORTABLE_USER_GUIDE.md) (Chinese).
+
+Version history is in [`CHANGELOG.md`](CHANGELOG.md); release packages are on
+[Releases](https://github.com/ShiXiongZhiDao/ShiIDPhoto/releases).
 
 ## Contributing
 

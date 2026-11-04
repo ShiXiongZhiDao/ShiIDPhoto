@@ -15,6 +15,7 @@
       "hint": "最通用的组合，身份证、社保卡、各类报名表大多接受",
       "size": "一寸",
       "background": "白色",
+      "mode": "single",
       "sheet": "六寸",
       "layout": {
         "columns": 4,

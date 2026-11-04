@@ -217,11 +217,12 @@
       <section class="sec" id="sec-output">
         <h3>输出</h3>
         <div class="seg" id="modes">
-          <button data-mode="single">单张</button>
-          <button data-mode="sheet" class="on">相纸排版</button>
+          <button data-mode="single" class="on">单张</button>
+          <button data-mode="sheet">相纸排版</button>
         </div>
-        <select id="sheetSel" class="sel"></select>
-        <div class="hintline"><span id="layoutInfo">—</span><b id="layoutCount">—</b></div>
+        <select id="sheetSel" class="sel" data-sheet-only></select>
+        <!-- 相纸与排版行数只在「相纸排版」模式下出现-->
+        <div class="hintline" data-sheet-only><span id="layoutInfo">—</span><b id="layoutCount">—</b></div>
         <div class="fmt">
           <span>格式</span>
           <select id="fmtSel" class="sel">
@@ -251,6 +252,8 @@
     </div>
 
     <div class="foot">
+      <!-- 设置存不下来 / 某项回退了：常驻说清楚，不靠会消失的 toast -->
+      <div class="prefs-warn" id="prefsWarn" hidden></div>
       <button class="primary" id="run" disabled>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
         生成证件照
@@ -266,7 +269,7 @@
     <div class="ph"></div>
     <div><div class="t">单张电子版</div><div class="m">—</div></div>
   </div>
-  <div class="thumb" id="thumbSheet">
+  <div class="thumb" id="thumbSheet" data-sheet-only>
     <div class="ph"></div>
     <div><div class="t">相纸排版</div><div class="m">—</div></div>
   </div>

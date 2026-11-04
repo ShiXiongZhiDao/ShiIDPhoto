@@ -76,11 +76,16 @@ def clean_dir(path: Path) -> None:
 
 
 # ---------------------------------------------------------------- 1. 资产
-def check_assets(assets: dict, tier: str) -> dict[str, Path]:
+MODEL_ASSET_IDS = {"model_pose", "model_yunet", "model_rmbg"}
+
+
+def check_assets(assets: dict, tier: str, include_models: bool = True) -> dict[str, Path]:
     cache = ROOT / assets.get("cache_dir", "build-assets")
     resolved: dict[str, Path] = {}
     missing = []
     for asset in assets["assets"]:
+        if not include_models and asset["id"] in MODEL_ASSET_IDS:
+            continue
         tiers = asset.get("tiers")
         if tiers and tier not in tiers:
             continue
@@ -229,9 +234,17 @@ def copy_models(staging: Path, manifest: dict, resolved: dict[str, Path], tier: 
 def copy_shell(staging: Path) -> None:
     for name in ("launcher.py", "portable_checks.py", LAUNCHER_BAT):
         shutil.copy2(ROOT / name, staging / name)
-    for name in ("config", "licenses", "docs", "shell"):
+    for name in ("config", "licenses", "shell"):
         shutil.copytree(ROOT / name, staging / name)
-    print("  已复制启动器、界面、配置与许可文档")
+    # docs/ 只放用户手册：既有约定、词汇表、验收手册是开发资料，不进任何发行包。
+    # 公开发行包会直接挂到 GitHub Release，整目录复制等于把内部决策一起发出去。
+    docs = staging / "docs"
+    docs.mkdir(parents=True, exist_ok=True)
+    guide = ROOT / "docs" / "PORTABLE_USER_GUIDE.md"
+    if not guide.is_file():
+        raise BuildError(f"缺少用户手册：{guide}")
+    shutil.copy2(guide, docs / "PORTABLE_USER_GUIDE.md")
+    print("  已复制启动器、界面、配置、许可与用户手册")
 
 
 def stamp_version(staging: Path, version: str) -> None:
@@ -416,7 +429,7 @@ def main(argv: list[str]) -> int:
         wheelhouse = ROOT / "build-assets" / "wheelhouse"
 
         step("1/7 校验构建资产")
-        resolved = check_assets(assets, tier)
+        resolved = check_assets(assets, tier, include_models=not args.no_models)
 
         step("2/7 准备目录")
         clean_dir(staging)

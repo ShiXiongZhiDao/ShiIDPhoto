@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "product_name": "ShiIDPhoto",
+  "product_title": "师兄证照",
+  "product_tagline": "证件照便携版",
+  "version": "0.7.0",
+  "platform": "windows-x64",
+  "distribution": {
+    "tier": "personal",
+    "_comment": "personal=自用，允许受限模型进本地包；public=公开分发，构建门禁只放行 approved"
+  },
+  "models": {
+    "bundled": true,
+    "_comment": "由构建写入：true=完整包；false=瘦包，首次启动由页面下载模型"
+  },
+  "upstream": {
+    "repo": "aoguai/LiYing",
+    "ref": "master@2026-11-04（哈希固定的快照）",
+    "license": "AGPL-3.0",
+    "source_dir_in_package": "src",
+    "entry": "src/webui/app.py"
+  },
+  "runtime": {
+    "python": "3.11.9",
+    "arch": "x64",
+    "onnxruntime_provider": "CPUExecutionProvider"
+  },
+  "webui": {
+    "host": "127.0.0.1",
+    "port_start": 7860,
+    "port_end": 7899,
+    "lang": "zh",
+    "share": false,
+    "open_browser": true,
+    "startup_timeout_seconds": 180
+  },
+  "paths": {
+    "model_manifest": "config/model-manifest.json",
+    "presets": "config/presets.json",
+    "user_data": "user-data",
+    "logs": "user-data/logs",
+    "input": "user-data/input",
+    "output": "user-data/output"
+  },
+  "offline": {
+    "no_runtime_model_download": true,
+    "disable_analytics": true
+  },
+  "shell": {
+    "entry": "shell/server.py",
+    "static_dir": "shell/static",
+    "fallback_flag": "--classic"
+  }
+}

@@ -1,0 +1,13 @@
+# 批处理必须是 CRLF + ASCII，否则 cmd.exe 解析会出错
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# 代码与文档统一 LF
+*.py text eol=lf
+*.md text eol=lf
+*.json text eol=lf
+
+# 二进制
+*.onnx binary
+*.whl binary
+*.zip binary

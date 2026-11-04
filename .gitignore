@@ -1,0 +1,23 @@
+# Build assets and outputs
+build-assets/
+dist/
+
+# User data
+user-data/
+output/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Model weights (copied in at build time, never committed)
+src/model/*.onnx
+src/tool/ext/*.exe
+
+# Editors
+.idea/
+.vscode/
+*.swp
+.DS_Store

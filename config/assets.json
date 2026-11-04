@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "note": "构建期唯一的联网入口。每个资产必须同时提供 size_bytes 与 sha256；镜像按顺序尝试，任一校验不通过即换下一个。",
+  "cache_dir": "build-assets",
+  "assets": [
+    {
+      "id": "python_embed",
+      "filename": "python-3.11.9-embed-amd64.zip",
+      "size_bytes": 11249023,
+      "sha256": "009d6bf7e3b2ddca3d784fa09f90fe54336d5b60f0e0f305c37f400bf83cfd3b",
+      "urls": [
+        "https://www.python.org/ftp/python/3.11.9/python-3.11.9-embed-amd64.zip"
+      ]
+    },
+    {
+      "id": "upstream_source",
+      "filename": "LiYing-master-20261104.zip",
+      "size_bytes": 15590321,
+      "sha256": "7eec166eb6b3a2c07bdec2199e6a3155c9b90b35e16223bdbaf773d2545e6b05",
+      "urls": [
+        "https://ghproxy.net/https://github.com/aoguai/LiYing/archive/refs/heads/master.zip"
+      ],
+      "unpack_to": "upstream/"
+    },
+    {
+      "id": "model_pose",
+      "filename": "yolov8n-pose.onnx",
+      "size_bytes": 13484153,
+      "sha256": "04f6d2416266f2aba6c5ba8b26de33ed9eba3279f972ac02e33f9f1366547586",
+      "urls": [
+        "https://hf-mirror.com/Xenova/yolov8n-pose/resolve/main/onnx/model.onnx",
+        "https://huggingface.co/Xenova/yolov8n-pose/resolve/main/onnx/model.onnx"
+      ]
+    },
+    {
+      "id": "model_yunet",
+      "filename": "face_detection_yunet_2023mar.onnx",
+      "size_bytes": 232589,
+      "sha256": "8f2383e4dd3cfbb4553ea8718107fc0423210dc964f9f4280604804ed2552fa4",
+      "urls": [
+        "https://hf-mirror.com/opencv/face_detection_yunet/resolve/main/face_detection_yunet_2023mar.onnx"
+      ]
+    },
+    {
+      "id": "model_rmbg",
+      "filename": "RMBG-1.4-model.onnx",
+      "size_bytes": 176153355,
+      "sha256": "8cafcf770b06757c4eaced21b1a88e57fd2b66de01b8045f35f01535ba742e0f",
+      "urls": [
+        "https://hf-mirror.com/briaai/RMBG-1.4/resolve/main/onnx/model.onnx",
+        "https://huggingface.co/briaai/RMBG-1.4/resolve/main/onnx/model.onnx"
+      ],
+      "tiers": [
+        "personal"
+      ]
+    }
+  ],
+  "wheelhouse": {
+    "python_version": "3.11",
+    "platform": "win_amd64",
+    "requirements": [
+      "click",
+      "cffi",
+      "colorama",
+      "mozjpeg_lossless_optimization",
+      "onnxruntime==1.17.3",
+      "orjson",
+      "gradio>=4.44.1,<5",
+      "pydantic>=2.0,<2.11",
+      "starlette<1.0",
+      "huggingface-hub>=0.19.3,<1.0",
+      "Pillow",
+      "opencv-python",
+      "numpy<2",
+      "piexif",
+      "pandas"
+    ],
+    "index_urls": [
+      "https://pypi.org/simple",
+      "https://pypi.tuna.tsinghua.edu.cn/simple"
+    ]
+  }
+}

@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>师兄证照</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand"><span class="dot"></span><span id="brandName">师兄证照</span> <small id="brandTag">证件照便携版</small></div>
+  <div class="sep"></div>
+  <div class="status" id="status"><span class="led"></span><span id="statusText">正在连接本地服务…</span></div>
+  <div class="right">
+    <span id="addr">127.0.0.1</span>
+    <span>CPU</span>
+    <span style="color:var(--ok)">AGPL-3.0</span>
+  </div>
+</header>
+
+<!-- 首次使用：模型不在包里时，这里是唯一的入口 -->
+<section class="setup" id="setup" hidden>
+  <div class="setup-stage">
+    <div class="setup-term" aria-hidden="true">
+      <div class="cmd"><span class="dim">PS&gt;</span> shiidphoto.exe --first-run</div>
+      <div class="dim">resolving models · tier=personal · target=user-data\models</div>
+      <div class="trow"><span>[check]</span> disk free <span class="ok" id="termDisk">ok</span></div>
+      <div class="trow"><span>[check]</span> write permission <span class="ok">ok</span></div>
+      <div class="trow"><span>[check]</span> mirror hf-mirror.com <span class="ok">ok</span></div>
+      <div class="trow"><span>[1/3]</span> face_detection_yunet_2023mar.onnx</div>
+      <div class="trow"><span>[2/3]</span> yolov8n-pose.onnx</div>
+      <div class="trow"><span>[3/3]</span> RMBG-1.4-model.onnx</div>
+    </div>
+
+    <div class="paper-stack">
+      <div class="sheet b"></div>
+      <div class="sheet c"></div>
+      <div class="sheet a">
+        <div class="phead"><b>SHIIDPHOTO</b><span>FIRST RUN · 3 PRINTS</span></div>
+
+        <div class="prints">
+          <div class="print" id="setupPrint0">
+            <div class="frame">
+              <svg class="plate" viewBox="0 0 100 140" aria-hidden="true">
+                <path d="M9 28V13h17M91 28V13H74M9 112v15h17M91 112v15H74" fill="none" stroke="#8A7455" stroke-width="1"/>
+                <rect x="17" y="24" width="66" height="92" fill="none" stroke="#A89272" stroke-width=".6" stroke-dasharray="2 3"/>
+                <ellipse cx="50" cy="64" rx="18" ry="22" fill="none" stroke="#6E5A3E" stroke-width="1.1"/>
+                <path d="M50 38v-5M50 90v5M32 64h-5M68 64h5" stroke="#6E5A3E" stroke-width=".9"/>
+                <circle cx="50" cy="64" r="1.4" fill="#6E5A3E"/>
+                <path d="M50 118v4M48 120h4" stroke="#A89272" stroke-width=".8"/>
+              </svg>
+            </div>
+            <div class="cap"><b>01 构图</b><span id="setupSize0">0.2 MB</span></div>
+          </div>
+
+          <div class="print" id="setupPrint1">
+            <div class="frame">
+              <svg class="plate" viewBox="0 0 100 140" aria-hidden="true">
+                <g transform="rotate(-7 50 66)">
+                  <rect x="18" y="22" width="64" height="90" fill="none" stroke="#8A7455" stroke-width="1"/>
+                  <path d="M28 92c4-16 12-25 22-27" fill="none" stroke="#B09A78" stroke-width=".8" stroke-dasharray="2 3"/>
+                </g>
+                <path d="M16 126h68" stroke="#6E5A3E" stroke-width="1"/>
+                <circle cx="50" cy="126" r="3.2" fill="none" stroke="#6E5A3E" stroke-width="1"/>
+                <path d="M47 126h6" stroke="#6E5A3E" stroke-width="1"/>
+                <text x="72" y="121" font-size="7" fill="#8A7455" font-family="monospace">-7°</text>
+              </svg>
+            </div>
+            <div class="cap"><b>02 校正</b><span id="setupSize1">12.9 MB</span></div>
+          </div>
+
+          <div class="print" id="setupPrint2">
+            <div class="frame">
+              <svg class="plate" viewBox="0 0 100 140" aria-hidden="true">
+                <defs>
+                  <linearGradient id="setupBgFade" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0" stop-color="#CBB18A"/>
+                    <stop offset=".58" stop-color="#DCC7A4"/>
+                    <stop offset="1" stop-color="#F3EBDC"/>
+                  </linearGradient>
+                </defs>
+                <rect x="14" y="20" width="72" height="100" fill="url(#setupBgFade)" stroke="#A89272" stroke-width=".8"/>
+                <path d="M14 20h36v100H14z" fill="#C9AE86" opacity=".45"/>
+                <path d="M50 20v100" stroke="#8A7455" stroke-width=".6" stroke-dasharray="2 3"/>
+                <text x="18" y="114" font-size="6" fill="#7A6648" font-family="monospace">SKIN</text>
+                <text x="62" y="114" font-size="6" fill="#7A6648" font-family="monospace">BG</text>
+              </svg>
+            </div>
+            <div class="cap"><b>03 换底</b><span id="setupSize2">168 MB</span></div>
+          </div>
+        </div>
+
+        <div class="pfoot">
+          <div class="big"><b id="setupPct">0</b><span>%</span></div>
+          <div class="line"><i id="setupBar"></i></div>
+          <div class="meta"><span id="setupStat">等待装片</span><span id="setupTime">—</span></div>
+          <div class="psrc"><span>SOURCE · HF-MIRROR</span><span>VERIFY · SHA256</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <aside class="setup-side">
+    <div class="kicker">First Run · 01</div>
+    <h1>让模型先显影，<br>再开始修照片。</h1>
+    <p class="lead">三个模型会依次落进相纸。全部显影完成后，工作台才会打开。模型只在本机使用，不会上传。</p>
+
+    <div class="setup-list" id="setupList"></div>
+
+    <div class="setup-hint">
+      <b>中途断了也没关系</b>
+      <p>已下载的部分会保留，点继续就从断点接着下，不用从头再来。</p>
+    </div>
+
+    <div class="setup-spacer"></div>
+    <div class="setup-warn" id="setupError" hidden></div>
+    <div class="setup-note" id="setupNote"></div>
+    <div class="setup-actions">
+      <button class="primary" id="setupStart">开始下载</button>
+      <button class="ghost" id="setupCancel" hidden>暂停</button>
+      <button class="ghost" id="setupLocal">我有文件，手动安装</button>
+    </div>
+    <input type="file" id="setupFile" accept=".onnx,application/octet-stream" hidden>
+  </aside>
+</section>
+
+<div class="shell">
+  <nav class="rail">
+    <button title="导入照片" id="railImport">
+      <svg viewBox="0 0 24 24"><path d="M12 16V4m0 0L7 9m5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+    </button>
+    <div class="gap"></div>
+    <button title="清空" id="railReset">
+      <svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"/></svg>
+    </button>
+    <button title="关于" id="railAbout">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8h.01"/></svg>
+    </button>
+  </nav>
+
+  <main class="stage">
+    <div class="stage-bar">
+      <span class="fname" id="fileName">未选择照片</span>
+      <span id="fileMeta"></span>
+      <div class="right">
+        <span id="stageStat"></span>
+      </div>
+    </div>
+
+    <!-- 结果可能不可用时挂在这里：toast 会消失，用户会漏看，这张图却已经被下载走了 -->
+    <div class="notice" id="notice" hidden></div>
+
+    <div class="canvas-wrap" id="canvasWrap">
+      <div class="dropzone" id="dropzone">
+        <svg viewBox="0 0 24 24"><path d="M12 15V3m0 0L8 7m4-4 4 4"/><path d="M3 15v3a3 3 0 0 0 3 3h12a3 3 0 0 0 3-3v-3"/></svg>
+        <div class="t1">把照片拖进来</div>
+        <div class="t2">或点击选择 · JPG / PNG / WebP</div>
+        <!-- 拍照要求两行，文案来自 GUIDE_STEPS[0].hints -->
+        <div class="dz-hints" id="dzHints"></div>
+      </div>
+
+      <div class="paper" id="paper" hidden>
+        <img id="preview" alt="预览">
+        <span class="mark tl"></span><span class="mark tr"></span>
+        <span class="mark bl"></span><span class="mark br"></span>
+        <div class="guides" id="guides">
+          <div class="guide" style="top:6.2%"><span class="tag" id="tagTop">头顶留白</span></div>
+          <div class="guide" style="top:74%"><span class="tag">下巴线</span></div>
+          <div class="vcenter"></div>
+          <div class="safebox"></div>
+        </div>
+      </div>
+
+      <div class="overlay on" id="overlay">
+        <div class="box">
+          <div class="spinner"></div>
+          <div class="txt" id="overlayTxt">正在连接本地服务…</div>
+          <div class="hint" id="bootHint"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="canvas-foot">
+      <div class="toggle on" id="toggleGuides"><span class="sw"></span>参考线</div>
+      <div class="toggle on" id="toggleSafe"><span class="sw"></span>裁剪框</div>
+      <div class="right">
+        <span id="footDpi">300 dpi</span><span>sRGB</span><span id="footFmt">JPG</span>
+      </div>
+    </div>
+  </main>
+
+  <aside class="inspector">
+    <div class="scroll">
+      <!-- 新手引导：常驻清单 + 手动触发的分步高亮。文案只有一处常量（app.js 的 GUIDE_STEPS），
+           清单与引导共用，见既有约定 -->
+      <section class="sec" id="sec-steps">
+        <h3>怎么做<button class="mini" id="guideBtn" type="button">新手引导</button></h3>
+        <ol class="steps" id="steps"></ol>
+      </section>
+
+      <section class="sec" id="sec-spec">
+        <h3>规格</h3>
+        <div class="spec-grid" id="specs"></div>
+        <div class="hintline" style="margin-top:10px">
+          <span>其他规格</span>
+        </div>
+        <select id="moreSpecs" class="sel" style="margin-top:6px"><option value="">更多规格…</option></select>
+      </section>
+
+      <section class="sec" id="sec-color">
+        <h3>底色</h3>
+        <div class="swatches" id="colors"></div>
+      </section>
+
+      <section class="sec" id="sec-output">
+        <h3>输出</h3>
+        <div class="seg" id="modes">
+          <button data-mode="single">单张</button>
+          <button data-mode="sheet" class="on">相纸排版</button>
+        </div>
+        <select id="sheetSel" class="sel"></select>
+        <div class="hintline"><span id="layoutInfo">—</span><b id="layoutCount">—</b></div>
+        <div class="fmt">
+          <span>格式</span>
+          <select id="fmtSel" class="sel">
+            <option value="jpg">JPG · .jpg</option>
+            <option value="jpeg">JPEG · .jpeg</option>
+            <option value="png">PNG · .png</option>
+          </select>
+        </div>
+        <div class="fmt">
+          <span>质量</span>
+          <select id="qualitySel" class="sel">
+            <option value="high" selected>高 · 92</option>
+            <option value="standard">标准 · 75</option>
+            <option value="small">较小 · 60</option>
+            <option value="tiny">最小 · 45</option>
+          </select>
+        </div>
+        <div class="fmt">
+          <span>体积</span>
+          <label class="chk" id="maxKbBox"><input type="checkbox" id="maxKbOn">不超过</label>
+          <input type="number" id="maxKb" class="num" value="100" min="20" max="8192" step="10" disabled>
+          <span id="maxKbUnit">KB</span>
+          <!-- PNG 时这一行不放假控件，直接说明为什么不能调 -->
+          <span class="fmt-note" id="sizeHint" hidden>PNG 无损，质量与体积不可调</span>
+        </div>
+      </section>
+    </div>
+
+    <div class="foot">
+      <button class="primary" id="run" disabled>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        生成证件照
+      </button>
+      <div class="sub" id="sub">照片只在本机处理</div>
+    </div>
+  </aside>
+</div>
+
+<footer class="outbar">
+  <span class="label">输出</span>
+  <div class="thumb" id="thumbSingle">
+    <div class="ph"></div>
+    <div><div class="t">单张电子版</div><div class="m">—</div></div>
+  </div>
+  <div class="thumb" id="thumbSheet">
+    <div class="ph"></div>
+    <div><div class="t">相纸排版</div><div class="m">—</div></div>
+  </div>
+  <div class="dl">
+    <button class="ghost solid off" id="dl">下载所选</button>
+    <button class="ghost" id="openFolder">打开文件夹</button>
+  </div>
+</footer>
+
+<input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp,image/bmp,image/tiff" hidden>
+
+<!-- 自定义尺寸：像素与毫米二选一，切换时自动换算 -->
+<div class="modal" id="customModal" hidden>
+  <div class="modal-card">
+    <div class="modal-head">
+      <h2>自定义尺寸</h2>
+      <button class="modal-x" id="cmClose" aria-label="关闭">×</button>
+    </div>
+    <p class="modal-sub">按受理单位给的要求填。像素和毫米二选一，切换时会自动换算，不会同时生效。</p>
+
+    <div class="cm-saved" id="cmSaved" hidden>
+      <div class="cm-label">已保存</div>
+      <div class="cm-list" id="cmList"></div>
+    </div>
+
+    <div class="seg cm-unit" id="cmUnit">
+      <button data-unit="px" class="on">像素</button>
+      <button data-unit="mm">毫米</button>
+    </div>
+
+    <div class="cm-row">
+      <label>宽 <input type="number" id="cmW" inputmode="numeric" placeholder="390"></label>
+      <label>高 <input type="number" id="cmH" inputmode="numeric" placeholder="567"></label>
+      <span class="cm-tag" id="cmUnitTag">px</span>
+    </div>
+    <div class="cm-row">
+      <label>DPI <input type="number" id="cmDpi" inputmode="numeric" value="300"></label>
+      <label class="grow">名称（可选）<input type="text" id="cmName" maxlength="24" placeholder="例如：某省考报名"></label>
+    </div>
+
+    <div class="cm-hint" id="cmHint">—</div>
+    <div class="cm-error" id="cmError" hidden></div>
+
+    <div class="cm-actions">
+      <button class="primary" id="cmUse">用这个尺寸</button>
+      <button class="ghost" id="cmSave">保存</button>
+      <button class="ghost" id="cmCancel">取消</button>
+    </div>
+    <p class="cm-note">按通用证件照比例构图。护照、签证等要求「脸占更大」的类别，这里做不出来。</p>
+  </div>
+</div>
+
+<!-- 关于：入口只在侧栏，向导期间整块被 .setup 盖住所以点不到。
+     data-qr 只写文件名，镜像地址在 app.js——两个镜像目录结构必须一致。 -->
+<div class="modal" id="aboutModal" hidden>
+  <div class="modal-card about-card">
+    <div class="modal-head">
+      <h2>关于</h2>
+      <button class="modal-x" id="aboutClose" aria-label="关闭">×</button>
+    </div>
+
+    <div class="about-top">
+      <span class="about-ver" id="aboutVersion">版本读取中…</span>
+      <span class="about-run">便携版 · 只监听 127.0.0.1</span>
+    </div>
+
+    <section class="about-sec">
+      <h3>关于本软件</h3>
+      <p>师兄证照做证件照的每一步都在本机完成：识别、换底色、排版、导出。照片不上传、不留临时副本，也不做使用统计。</p>
+    </section>
+
+    <section class="about-sec">
+      <h3>隐私与许可</h3>
+      <p>本地服务只监听 127.0.0.1，处理结果不离开这台机器；界面不采集任何使用数据。<b>唯一的对外请求是这一页的二维码图片</b>——它们是固定的静态图，跟你的照片无关，两个图片源都连不上时对应卡位会说明并允许重试。源码以 AGPL-3.0 发布，模型与第三方组件的许可见包内 <code>licenses/</code>。</p>
+    </section>
+
+    <section class="about-sec">
+      <h3>项目与作者</h3>
+      <div class="about-links">
+        <a href="https://github.com/ShiXiongZhiDao/ShiIDPhoto" target="_blank" rel="noreferrer">GitHub 仓库</a>
+        <a href="https://gitee.com/ShiXiongZhiDao/ShiIDPhoto" target="_blank" rel="noreferrer">Gitee 仓库</a>
+        <a href="https://shixiongzhidao.cn" target="_blank" rel="noreferrer">个人主页</a>
+      </div>
+    </section>
+
+    <section class="about-sec">
+      <details class="about-updates">
+        <summary>最近更新</summary>
+        <ul>
+          <li>改名「师兄证照」，品牌串收成单一来源</li>
+          <li>自定义证件照尺寸：内置规格之外可自填宽高，常用的能存下来</li>
+          <li>输出质量四档，可勾「不超过 N KB」压到目标体积</li>
+          <li>主界面常驻步骤引导</li>
+        </ul>
+      </details>
+    </section>
+
+    <section class="about-sec">
+      <h3>关注公众号</h3>
+      <div class="qr-slot qr-banner">
+        <img data-qr="wechat-official.png" alt="公众号二维码" referrerpolicy="no-referrer">
+        <p class="qr-fail" hidden>两个图片源都没连上，二维码暂时加载不出来。检查网络后重试，或直接在微信里搜「师兄知道」。</p>
+      </div>
+      <p class="qr-cap"><b>师兄知道</b><span>新版本、用法和新功能会首发在公众号「师兄知道」。扫一扫，或在微信里搜这个名字。</span></p>
+      <button class="ghost qr-retry">重试</button>
+    </section>
+
+    <section class="about-sec">
+      <h3>赞助作者</h3>
+      <p class="about-hint">喜欢的话可以请作者喝杯咖啡，不影响功能。</p>
+      <div class="qr-row">
+        <div class="qr-slot qr-tile">
+          <img data-qr="alipay.png" alt="支付宝收款码" referrerpolicy="no-referrer">
+          <p class="qr-fail" hidden>这张图加载不出来</p>
+          <span class="qr-name">支付宝</span>
+        </div>
+        <div class="qr-slot qr-tile">
+          <img data-qr="wechat-pay.png" alt="微信支付收款码" referrerpolicy="no-referrer">
+          <p class="qr-fail" hidden>这张图加载不出来</p>
+          <span class="qr-name">微信支付</span>
+        </div>
+      </div>
+      <button class="ghost qr-retry">重试</button>
+    </section>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- 新手引导：点「怎么做」标题右侧那颗才出现。四块遮条围住被点亮的控件，
+     控件本身照常能点，空白处/Esc/跳过 立刻退出 -->
+<div class="tour" id="guide" hidden>
+  <div class="tour-hit" id="guideHitTop"></div>
+  <div class="tour-hit" id="guideHitRight"></div>
+  <div class="tour-hit" id="guideHitBottom"></div>
+  <div class="tour-hit" id="guideHitLeft"></div>
+  <div class="tour-spot" id="guideSpot"></div>
+  <div class="tour-card" id="guideCard">
+    <div class="tour-idx" id="guideIdx">第 1 / 4 步</div>
+    <h4 id="guideTitle"></h4>
+    <p id="guideBody"></p>
+    <ul class="tour-hints" id="guideHints" hidden></ul>
+    <div class="tour-actions">
+      <button class="ghost" id="guideSkip" type="button">跳过</button>
+      <button class="primary" id="guideNext" type="button">下一步</button>
+    </div>
+  </div>
+</div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

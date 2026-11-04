@@ -1,0 +1,136 @@
+{
+  "schema_version": 1,
+  "note": "path 相对于包根目录。redistribution_status：approved=已确认可随包再分发，pending=未确认，restricted=当前许可不允许该分发方式。构建脚本据此做门禁。",
+  "models": [
+    {
+      "id": "pose",
+      "asset_id": "model_pose",
+      "feature": "人体姿态识别与角度纠正",
+      "required": true,
+      "path": "src/model/yolov8n-pose.onnx",
+      "size_bytes": 13484153,
+      "sha256": "04f6d2416266f2aba6c5ba8b26de33ed9eba3279f972ac02e33f9f1366547586",
+      "source": {
+        "name": "YOLOv8n-pose ONNX 导出",
+        "url": "https://huggingface.co/Xenova/yolov8n-pose",
+        "upstream_weights": "https://github.com/ultralytics/assets/releases/download/v8.2.0/yolov8n-pose.pt"
+      },
+      "license": {
+        "spdx": "AGPL-3.0",
+        "url": "https://github.com/ultralytics/ultralytics/blob/main/LICENSE",
+        "redistribution_status": "approved",
+        "review_basis": "Ultralytics 权重为 AGPL-3.0；本包整体以 AGPL-3.0 分发并随包提供对应源码（src/ 与本次修改），满足 AGPL 源码提供义务。若改为闭源分发则本项失效。"
+      },
+      "tested": false
+    },
+    {
+      "id": "face_yunet",
+      "asset_id": "model_yunet",
+      "feature": "基础人脸检测 / 证件照构图排版",
+      "required": true,
+      "path": "src/model/face_detection_yunet_2023mar.onnx",
+      "size_bytes": 232589,
+      "sha256": "8f2383e4dd3cfbb4553ea8718107fc0423210dc964f9f4280604804ed2552fa4",
+      "source": {
+        "name": "YuNet 2023mar ONNX",
+        "url": "https://github.com/opencv/opencv_zoo/tree/main/models/face_detection_yunet"
+      },
+      "license": {
+        "spdx": "Apache-2.0",
+        "url": "https://github.com/opencv/opencv_zoo/blob/main/LICENSE",
+        "redistribution_status": "approved",
+        "review_basis": "已核对 opencv_zoo 仓库 LICENSE 为 Apache-2.0（非 MIT）。模型文件随仓库以同一许可证发布。"
+      },
+      "tested": false
+    },
+    {
+      "id": "background_removal",
+      "asset_id": "model_rmbg",
+      "feature": "背景移除与换底色",
+      "required": true,
+      "path": "src/model/RMBG-1.4-model.onnx",
+      "size_bytes": 176153355,
+      "sha256": "8cafcf770b06757c4eaced21b1a88e57fd2b66de01b8045f35f01535ba742e0f",
+      "source": {
+        "name": "BRIA RMBG-1.4 ONNX",
+        "url": "https://huggingface.co/briaai/RMBG-1.4"
+      },
+      "license": {
+        "spdx": "LicenseRef-BRIA-RMBG-1.4",
+        "url": "https://huggingface.co/briaai/RMBG-1.4",
+        "redistribution_status": "restricted",
+        "review_basis": "BRIA 模型卡标注 source-available、非商业用途，商业使用需另行取得授权。因此禁止进入 public 档发行包；仅允许 personal 档本地自用，不得对外分发本文件。"
+      },
+      "tested": false
+    },
+    {
+      "id": "skin_mask",
+      "feature": "自动美肤（可选功能组）",
+      "required": false,
+      "group": "skin_retouch",
+      "path": "src/model/skin_retouch_mask.onnx",
+      "size_bytes": 0,
+      "sha256": "",
+      "source": {
+        "name": "cv_unet_skin_retouching 导出 ONNX",
+        "url": "https://github.com/aoguai/skin-retouching-onnxruntime"
+      },
+      "license": {
+        "spdx": "REVIEW_REQUIRED",
+        "url": "https://modelscope.cn/models/damo/cv_unet_skin_retouching_torch/summary",
+        "redistribution_status": "pending",
+        "review_basis": "ModelScope 模型条款与 ONNX 导出权均未核实，默认不随包分发，美肤功能在发行版中关闭。"
+      },
+      "tested": false
+    },
+    {
+      "id": "skin_generator",
+      "feature": "自动美肤（可选功能组）",
+      "required": false,
+      "group": "skin_retouch",
+      "path": "src/model/retouch_generator.onnx",
+      "size_bytes": 0,
+      "sha256": "",
+      "source": {
+        "name": "cv_unet_skin_retouching 导出 ONNX",
+        "url": "https://github.com/aoguai/skin-retouching-onnxruntime"
+      },
+      "license": {
+        "spdx": "REVIEW_REQUIRED",
+        "url": "https://modelscope.cn/models/damo/cv_unet_skin_retouching_torch/summary",
+        "redistribution_status": "pending",
+        "review_basis": "同上，未核实前不随包分发。"
+      },
+      "tested": false
+    },
+    {
+      "id": "skin_face_detector",
+      "feature": "自动美肤（可选功能组）",
+      "required": false,
+      "group": "skin_retouch",
+      "path": "src/model/face_detector.onnx",
+      "size_bytes": 0,
+      "sha256": "",
+      "source": {
+        "name": "RetinaFace 导出 ONNX",
+        "url": "https://github.com/biubug6/Pytorch_Retinaface"
+      },
+      "license": {
+        "spdx": "REVIEW_REQUIRED",
+        "url": "https://github.com/biubug6/Pytorch_Retinaface",
+        "redistribution_status": "pending",
+        "review_basis": "RetinaFace 各实现权重许可不一致，未核实前不随包分发。"
+      },
+      "tested": false
+    }
+  ],
+  "optional_model_groups": [
+    {
+      "id": "skin_retouch",
+      "feature": "自动美肤",
+      "models": ["skin_mask", "skin_generator", "skin_face_detector"],
+      "ui_state_when_absent": "disabled",
+      "note": "该组任一模型缺失时，美肤功能应保持关闭并在界面上说明，不得静默降级。"
+    }
+  ]
+}

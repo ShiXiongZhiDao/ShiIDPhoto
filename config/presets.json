@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "description": "「一次选择」的预设层。size/background/sheet 的取值必须与 data/size_zh.csv、data/color_zh.csv 的 Name 列逐字一致，由 scripts/verify_portable.py 静态校验。",
+  "defaults": {
+    "id": "one-inch-white",
+    "layout_position": 4,
+    "photos_spacing": 0,
+    "add_crop_lines": true,
+    "compress": false
+  },
+  "presets": [
+    {
+      "id": "one-inch-white",
+      "label": "一寸 · 白底 · 六寸相纸 16 张",
+      "hint": "最通用的组合，身份证、社保卡、各类报名表大多接受",
+      "size": "一寸",
+      "background": "白色",
+      "sheet": "六寸",
+      "layout": {
+        "columns": 4,
+        "rows": 4
+      },
+      "orientation": "portrait"
+    },
+    {
+      "id": "one-inch-blue",
+      "label": "一寸 · 蓝底 · 六寸相纸 16 张",
+      "hint": "部分单位档案照、学生证要求蓝底",
+      "size": "一寸",
+      "background": "蓝色",
+      "sheet": "六寸",
+      "layout": {
+        "columns": 4,
+        "rows": 4
+      },
+      "orientation": "portrait"
+    },
+    {
+      "id": "two-inch-blue",
+      "label": "二寸 · 蓝底 · 五寸相纸 4 张",
+      "hint": "毕业证、学位证、职称证书常用",
+      "size": "二寸 (证件照)",
+      "background": "蓝色",
+      "sheet": "五寸",
+      "layout": {
+        "columns": 2,
+        "rows": 2
+      },
+      "orientation": "portrait"
+    },
+    {
+      "id": "small-two-inch-white",
+      "label": "小二寸 · 白底 · 六寸相纸 9 张",
+      "hint": "护照、港澳通行证、部分签证的常见规格",
+      "size": "小二寸",
+      "background": "白色",
+      "sheet": "六寸",
+      "layout": {
+        "columns": 3,
+        "rows": 3
+      },
+      "orientation": "portrait"
+    },
+    {
+      "id": "id-card-white",
+      "label": "中国居民身份证 · 白底 · 单张",
+      "hint": "358×441 像素 @350dpi，只出电子版，不排版",
+      "size": "中国居民身份证",
+      "background": "白色",
+      "sheet": null,
+      "layout": null,
+      "orientation": "portrait"
+    },
+    {
+      "id": "visa-us-white",
+      "label": "美国签证 · 白底 · 单张",
+      "hint": "600×600 像素正方形，头部占比要求严格",
+      "size": "中国美国签证",
+      "background": "白色",
+      "sheet": null,
+      "layout": null,
+      "orientation": "portrait"
+    },
+    {
+      "id": "driver-license-white",
+      "label": "中国驾驶证 · 白底 · 六寸相纸 16 张",
+      "hint": "同小一寸尺寸，车管所提交用",
+      "size": "中国驾驶证",
+      "background": "白色",
+      "sheet": "六寸",
+      "layout": {
+        "columns": 4,
+        "rows": 4
+      },
+      "orientation": "portrait"
+    }
+  ]
+}

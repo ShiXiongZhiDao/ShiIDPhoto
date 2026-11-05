@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <title>ShiIDPhoto - Background Swap</title>
+  <defs>
+    <clipPath id="tile"><rect width="128" height="128" rx="28"/></clipPath>
+  </defs>
+  <g clip-path="url(#tile)">
+    <rect width="64" height="128" fill="#2563EB"/>
+    <rect x="64" width="64" height="128" fill="#F97373"/>
+    <circle cx="64" cy="43" r="18" fill="#FFFFFF"/>
+    <path d="M25 104c3-19 18-31 39-31s36 12 39 31c1 6-3 10-9 10H34c-6 0-10-4-9-10Z" fill="#FFFFFF"/>
+  </g>
+</svg>

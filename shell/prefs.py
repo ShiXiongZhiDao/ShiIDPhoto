@@ -1,4 +1,4 @@
-"""用户偏好（规格 / 底色 / 输出模式 / 相纸 / 自定义尺寸 / 输出参数）的读写与校验。
+"""用户偏好（规格 / 底色 / 输出模式 / 相纸 / 自定义尺寸 / 输出参数 / 界面语言 / 界面外观）的读写与校验。
 
 为什么存文件而不是浏览器：`localStorage` 的 origin **含端口**，而启动器在端口被占用时
 会自动往后找（7860 → 7861/7862，见 `launcher.py::choose_port`），端口一换那份记忆
@@ -28,9 +28,17 @@ FIELDS = (
     "quality",
     "max_kb",
     "max_kb_on",
+    "language",
+    "theme",
 )
 
 MODES = ("single", "sheet")
+LANGUAGES = ("auto", "zh", "en")
+# 界面外观只有深浅两档。这三个名字是三处同源的契约：
+# prefs.THEMES ↔ style.css 的 html[data-theme="…"] 块 ↔ app.js 的 THEMES，
+# 对不上不会报错，只会"点了开关屏幕闪一下又回来"。
+THEMES = ("dark", "light")
+THEME_DEFAULT = "dark"
 # 与 shell/server.py 的 CUSTOM_SIZE_KEY 一致：前端用它表示"这次用自定义尺寸"
 CUSTOM_SIZE_KEY = "__custom__"
 
@@ -122,6 +130,19 @@ def normalize(raw: dict, catalog: dict, custom_ids: set[str], defaults: dict) ->
     # 没有上限数值时，勾选状态不能单独活着——那会让界面显示一个不起作用的勾
     max_kb_on = bool(raw.get("max_kb_on")) and max_kb is not None
 
+    # 界面语言：`auto` 是"跟随系统"这个真状态，不是"没存过"。
+    # 存 auto 就永远按启动时的系统语言走，存 zh/en 才和用户的手选绑定。
+    language = _text(raw.get("language")).lower() or defaults.get("language") or "auto"
+    if language not in LANGUAGES:
+        notes.append(f"上次记住的界面语言「{language}」不认识，已回到跟随系统")
+        language = "auto"
+
+    # 界面外观：只有深浅两档，没有"跟随系统"——那会把"我点了开关"这件事变成一次猜测。
+    theme = _text(raw.get("theme")).lower() or defaults.get("theme") or THEME_DEFAULT
+    if theme not in THEMES:
+        notes.append(f"上次记住的界面外观「{theme}」不认识，已回到深色")
+        theme = THEME_DEFAULT
+
     return (
         {
             "size": size,
@@ -133,6 +154,8 @@ def normalize(raw: dict, catalog: dict, custom_ids: set[str], defaults: dict) ->
             "quality": quality,
             "max_kb": max_kb,
             "max_kb_on": bool(max_kb_on),
+            "language": language,
+            "theme": theme,
         },
         notes,
     )

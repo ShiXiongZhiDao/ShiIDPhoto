@@ -27,7 +27,16 @@ PLACEHOLDERS = ("REPLACE", "TODO", "unknown", "REVIEW_REQUIRED")
 # 风险在于它有三处消费者（构建复制、验收必需项、启动器自检），漏一处就会报成
 # "缺少必需文件"，看起来像打包出错，其实是改名没改全。所以由
 # tests/test_gates.py::BrandTests 钉住：这个常量必须含 config 的 product_title。
-LAUNCHER_BAT = "启动师兄证照.bat"
+LAUNCHER_BAT = "双击启动师兄证照.bat"
+
+#: 同一份入口脚本的英文名。内容与中文那份逐字相同（两边都是纯 ASCII），
+#: 存在的理由是：中文名在解压工具与命令行这两条路上都可能被代码页弄乱，而英文文档
+#: 的读者本来也不该被要求去敲一个中文文件名。两份一起进包，也一起出现在公开源码里。
+LAUNCHER_BAT_EN = "Launch-ShiIDPhoto.bat"
+
+#: 构建与验收一律遍历这份元组，别再各写各的——两处清单分开之后，漏拷的那份
+#: 表现是"用户看不见它"，不是"构建失败"。
+LAUNCHER_BATS = (LAUNCHER_BAT, LAUNCHER_BAT_EN)
 
 #: 拉丁品牌名。唯一来源是 `config/portable.json` 的 `product_name`，但下面这两个
 #: 协议串要在配置读出来之前就有值（HTTP 头、下载 UA），所以在这里落成常量，
@@ -179,14 +188,14 @@ def validate_models(
             if required:
                 if require_files:
                     issues.append(
-                        Issue("error", "model.missing", f"缺少必要模型「{model_id}」，路径：{rel_path}")
+                        Issue("error", "model.missing", f"缺少必要 AI 模型「{model_id}」，路径：{rel_path}")
                     )
                 elif build_mode:
                     # 瘦包：文件不在，但它将来会被下载，许可判定现在就要过
                     check_license(entry, model_id)
             else:
                 issues.append(
-                    Issue("warning", "model.optional_missing", f"可选模型「{model_id}」未安装，相关功能将不可用")
+                    Issue("warning", "model.optional_missing", f"可选 AI 模型「{model_id}」未安装，相关功能将不可用")
                 )
             # 文件不存在就不会进包，其完整性无需判定
             continue
@@ -205,7 +214,7 @@ def validate_models(
                 Issue(
                     "error",
                     "model.size_mismatch",
-                    f"模型「{model_id}」大小不符：期望 {expected_size} 字节，实际 {actual_size} 字节",
+                    f"AI 模型「{model_id}」大小不符：期望 {expected_size} 字节，实际 {actual_size} 字节",
                 )
             )
             continue
@@ -225,7 +234,7 @@ def validate_models(
             actual_hash = sha256_file(model_path)
             if actual_hash != expected_hash:
                 issues.append(
-                    Issue("error", "model.hash_mismatch", f"模型「{model_id}」校验未通过，文件可能损坏")
+                    Issue("error", "model.hash_mismatch", f"AI 模型「{model_id}」校验未通过，文件可能损坏")
                 )
 
     return issues

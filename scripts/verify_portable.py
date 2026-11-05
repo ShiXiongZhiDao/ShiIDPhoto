@@ -22,14 +22,14 @@ sys.path.insert(0, str(ROOT / "shell"))
 
 import assets  # noqa: E402
 from portable_checks import (  # noqa: E402
-    LAUNCHER_BAT,
+    LAUNCHER_BATS,
     CheckError,
     load_json,
     validate_models,
 )
 
 REQUIRED_ENTRIES = [
-    LAUNCHER_BAT,
+    *LAUNCHER_BATS,
     "launcher.py",
     "portable_checks.py",
     "config/portable.json",
@@ -41,6 +41,7 @@ REQUIRED_ENTRIES = [
     "shell/contracts.py",
     "shell/assets.py",
     "shell/static/index.html",
+    "shell/static/favicon.svg",
     "shell/static/app.js",
     "shell/static/style.css",
     "src/webui/app.py",

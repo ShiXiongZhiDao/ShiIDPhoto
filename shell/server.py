@@ -42,6 +42,7 @@ sys.path.insert(0, str(SHELL_DIR))  # 让 contracts / assets 在"脚本方式"�
 import assets  # noqa: E402  (依赖上面的 sys.path)
 import contracts  # noqa: E402
 import custom_sizes  # noqa: E402
+import i18n  # noqa: E402
 import imaging  # noqa: E402
 import prefs  # noqa: E402
 
@@ -96,8 +97,57 @@ def set_brand(cfg: dict) -> None:
     Handler.server_version = f"{BRAND['latin']}/1.0"
 
 
+#: 界面语言：intent 是用户存的 `auto|zh|en`，effective 是这次真正生效的语种。
+#: 只在启动与保存偏好时重算（既有约定：运行中不跟系统语言变）。
+LANG_STATE: dict = {"intent": "auto", "effective": "zh"}
+
+
+def refresh_language(pref_value: str | None = None) -> tuple[str, str]:
+    """算出这次生效的语言并写进 `i18n.LANG`。优先级链见既有约定。
+
+    消息生成点全靠这个模块级语言——不往下传参，是因为传参链一长必有人漏传，
+    漏了就是"按钮英文、弹窗中文"那种没人报错的劈开态（既有约定同一条理由）。
+    """
+    try:
+        cfg_lang = (load_config().get("webui", {}) or {}).get("lang")
+    except Exception:  # noqa: BLE001 - 配置读不出来时按 auto 走，不拦启动
+        cfg_lang = None
+    if pref_value is None:
+        stored, _note = prefs.load(PREFS_PATH)
+        pref_value = stored.get("language")
+    intent, effective = i18n.resolve(pref_value, cfg_lang)
+    i18n.set_lang(effective)
+    LANG_STATE["intent"], LANG_STATE["effective"] = intent, effective
+    return intent, effective
+
+
+#: 后端消息的三条出口都在这里翻译（既有约定/13）。
+#: 不在 110 个调用点包 msg()：那要把 lang 一路传下去，漏一处就是"按钮英文、弹窗中文"。
+_MSG_FIELDS = ("error", "stage", "note", "notes", "hint", "message",
+               "notice", "prefs_notes", "custom_note")
+
+
+def _translate(node):
+    """英文态把消息字段换成词条；中文态原样返回，一个字符都不过表。"""
+    if i18n.LANG != "en":
+        return node
+    if isinstance(node, dict):
+        out = {}
+        for key, value in node.items():
+            if key in _MSG_FIELDS:
+                if isinstance(value, str):
+                    value = i18n.out(value)
+                elif isinstance(value, list):
+                    value = [i18n.out(v) if isinstance(v, str) else v for v in value]
+            out[key] = _translate(value)
+        return out
+    if isinstance(node, list):
+        return [_translate(v) for v in node]
+    return node
+
+
 def log(message: str) -> None:
-    print(message, flush=True)
+    print(i18n.out(message), flush=True)
 
 
 def load_config() -> dict:
@@ -192,7 +242,7 @@ def load_upstream(paths: dict[str, Path]) -> None:
     try:
         with STATE_LOCK:
             STATE["mode"] = "loading"
-            STATE["stage"] = "正在加载模型与规格表"
+            STATE["stage"] = "正在加载 AI 模型与规格表"
         upstream = Upstream(on_stage=lambda text: STATE.__setitem__("stage", text), model_paths=paths)
         catalog = upstream.catalog()
         Handler.upstream = upstream
@@ -263,7 +313,7 @@ def install_worker(plan: assets.Plan) -> None:
         if not fresh.ready:
             missing = "、".join(a.title for a in fresh.missing)
             with STATE_LOCK:
-                setup["error"] = f"仍有模型未就绪：{missing}"
+                setup["error"] = f"仍有 AI 模型未就绪：{missing}"
             return
 
         load_upstream(fresh.resolved)
@@ -293,7 +343,7 @@ def install_local(data: bytes) -> str:
     """用户手动提供的文件：按 sha256 认领，写进模型目录。"""
     plan = plan_models()
     if plan.ready:
-        raise assets.AssetError("模型已经齐备，不需要安装")
+        raise assets.AssetError("AI 模型已经齐备，不需要安装")
     asset = assets.write_local(data, plan)
     fresh = plan_models()
     if fresh.ready:
@@ -372,7 +422,7 @@ class Upstream:
             # 模型可能来自 user-data/models 或包内 src/model，由调用方解析好再传进来
             missing = {"pose", "face_yunet", "background_removal"} - set(model_paths)
             if missing:
-                raise RuntimeError(f"模型路径解析不完整：{'、'.join(sorted(missing))}")
+                raise RuntimeError(f"AI 模型路径解析不完整：{'、'.join(sorted(missing))}")
             self.pose = Path(model_paths["pose"])
             self.yunet = Path(model_paths["face_yunet"])
             self.rmbg = Path(model_paths["background_removal"])
@@ -382,7 +432,7 @@ class Upstream:
             self.rmbg = self.model_dir / "RMBG-1.4-model.onnx"
         for path in (self.pose, self.yunet, self.rmbg):
             if not path.is_file():
-                raise RuntimeError(f"缺少模型：{path}")
+                raise RuntimeError(f"缺少 AI 模型：{path}")
 
         # 启动时就把三个会话真正建一遍：ORT 只在校验模型头时才会发现文件损坏，
         # 光检查文件存在会让"模型坏了"拖到用户第一次生成时才暴露。
@@ -390,7 +440,7 @@ class Upstream:
 
         for label, path in (("姿态", self.pose), ("人脸", self.yunet), ("抠图", self.rmbg)):
             if on_stage:
-                on_stage(f"正在加载{label}模型")
+                on_stage(f"正在加载 AI 模型（{label}）")
             ort.InferenceSession(str(path), providers=["CPUExecutionProvider"])
 
         if on_stage:
@@ -673,6 +723,8 @@ def prefs_view(catalog: dict, custom_items: list[dict]) -> tuple[dict, list[str]
         "quality": "high",
         "max_kb": 100,
         "max_kb_on": False,
+        # 界面外观不属于任何预设：预设管出片参数，深浅是这台机器上的口味
+        "theme": prefs.THEME_DEFAULT,
     }
     clean, notes = prefs.normalize(raw, catalog, {x["id"] for x in custom_items}, defaults)
     if note:
@@ -689,7 +741,7 @@ class Handler(BaseHTTPRequestHandler):
 
     # ---- helpers ----
     def send_json(self, payload: dict, status: int = 200) -> None:
-        data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        data = json.dumps(_translate(payload), ensure_ascii=False).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(data)))
@@ -767,11 +819,15 @@ class Handler(BaseHTTPRequestHandler):
                     "product_latin": BRAND["latin"],
                     "tagline": BRAND["tagline"],
                     "brand": dict(BRAND),
-                    "catalog": self.upstream.catalog(),
+                    "catalog": i18n.localize_catalog(self.upstream.catalog(),
+                                                     LANG_STATE["effective"]),
                     "custom_sizes": custom,
                     "presets": PRESETS.get("presets", []),
                     # 已按 启动参数 > defaults.id > 第一条 解析过，前端不需要再猜
                     "default_preset": DEFAULT_PRESET_ID,
+                    # 界面语言：intent 给控件选中态，effective 给 auto 态那句"当前显示英文"
+                    "language": LANG_STATE["intent"],
+                    "language_effective": LANG_STATE["effective"],
                     # 界面选择：服务端是唯一校验点，前端只念结果
                     "prefs": clean_prefs,
                     "prefs_notes": prefs_notes,
@@ -876,7 +932,7 @@ class Handler(BaseHTTPRequestHandler):
                             "ok": False,
                             "mode": snap["mode"],
                             "loading": snap["mode"] != "setup",
-                            "error": "模型尚未就绪",
+                            "error": "AI 模型尚未就绪",
                         },
                         503,
                     )
@@ -933,6 +989,8 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError("请求体必须是 JSON 对象")
                 catalog = self.upstream.catalog()
                 custom, _ = custom_sizes.load(CUSTOM_PATH)
+                # 先定语言再校验，回退原因（notes）才可能是刚选的这个语言
+                refresh_language(doc.get("language"))
                 clean, _notes, _saved = prefs_view(catalog, custom)
                 raw = {k: doc[k] for k in prefs.FIELDS if k in doc}
                 saved_prefs, notes = prefs.normalize(raw, catalog, {x["id"] for x in custom}, clean)
@@ -989,6 +1047,7 @@ class Handler(BaseHTTPRequestHandler):
 def main() -> int:
     cfg = load_config()
     set_brand(cfg)  # 端口还没绑之前就要有品牌串：就绪日志与 Server 头都读它
+    refresh_language()  # 启动消息（含加载失败那种只有控制台能看见的）得用对语言
     webui = cfg.get("webui", {})
     host = webui.get("host", "127.0.0.1")
     port = int(os.environ.get("IDPHOTO_PORT") or webui.get("port_start", 7860))
@@ -999,7 +1058,7 @@ def main() -> int:
     model_home().mkdir(parents=True, exist_ok=True)
 
     httpd = Server((host, port), Handler)
-    log(f"服务已在 http://{host}:{port} 监听，正在加载模型……")
+    log(f"服务已在 http://{host}:{port} 监听，正在加载 AI 模型……")
 
     def bootstrap() -> None:
         try:
@@ -1009,7 +1068,7 @@ def main() -> int:
             plan = plan_models()
             if not plan.ready:
                 names = "、".join(asset.title for asset in plan.missing)
-                log(f"缺少 {len(plan.missing)} 个模型（{names}），等待在页面完成首次设置")
+                log(f"缺少 {len(plan.missing)} 个 AI 模型（{names}），等待在页面完成首次设置")
                 log(f"需要下载约 {plan.total_bytes / 1024 / 1024:.0f} MB，目标目录：{plan.home}")
                 activate_setup(plan)
                 return

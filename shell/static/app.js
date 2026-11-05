@@ -28,6 +28,40 @@ const $ = id => document.getElementById(id);
 
 const CUSTOM_KEY = '__custom__';
 
+/* ---------------- 界面外观（深 / 浅） ---------------- */
+/* 组件规则读的全是语义 token（style.css），所以换主题=换一块 token，
+   代码这边只负责把名字写到 <html data-theme> 上。
+   记忆走 prefs（user-data/prefs.json），不写 localStorage——端口一漂那份记忆就等于没有。
+   地址栏 `?theme=` 只决定这一次打开成什么样（调颜色用），点按钮是明确的手势，两者都以写回为准。
+   名字不认识就回深色，并且当场说一句：静默回默认是本仓最恨的失效方式。 */
+const THEMES = ['dark', 'light'];
+const THEME_DEFAULT = 'dark';
+const THEME_FROM_URL = new URLSearchParams(location.search).get('theme') || '';
+
+function applyTheme(name) {
+  const theme = THEMES.includes(name) ? name : THEME_DEFAULT;
+  document.documentElement.dataset.theme = theme;
+  const btn = $('railTheme');
+  if (btn) {
+    btn.classList.toggle('on', theme === 'light');
+    btn.setAttribute('aria-pressed', theme === 'light' ? 'true' : 'false');
+  }
+  if (name && theme !== name) {
+    console.warn('[外观] 不认识的主题名', name, '→ 回', THEME_DEFAULT);
+    toast(`没有「${name}」这种界面外观，已回到深色`);
+  }
+  return theme;
+}
+
+function toggleTheme() {
+  const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
+  state.theme = next;
+  applyTheme(next);
+  savePrefs();
+}
+
+applyTheme(THEME_FROM_URL);
+
 const state = {
   catalog: null,
   version: '',
@@ -38,6 +72,7 @@ const state = {
   color: '白色',
   sheet: '六寸',
   mode: 'single',
+  theme: THEME_DEFAULT,
   file: null,
   result: null,
   selected: 'single',
@@ -109,6 +144,7 @@ function collectPrefs() {
     size: state.size,
     background: state.color,
     mode: state.mode,
+    theme: state.theme,
     sheet: state.sheet,
     custom_size_id: state.size === CUSTOM_KEY ? state.customSizeId : '',
     format: $('fmtSel').value,
@@ -177,6 +213,11 @@ function applyPrefs(data) {
   maxKbWanted = !!p.max_kb_on;
   $('footFmt').textContent = p.format.toUpperCase();
   syncSizeControls();
+
+  // 外观和输出三项一样，不由预设定义，任何时候都听记忆的；
+  // 只有地址栏这次指定过 `?theme=`，那一句比记忆大，且不写回。
+  state.theme = p.theme || THEME_DEFAULT;
+  if (!THEME_FROM_URL) applyTheme(state.theme);
 
   // 启动参数赢，且这一次不写回记忆（Q5）：预设定义的四个字段不听记忆的
   if (state.presetSource === 'cli') return;
@@ -256,7 +297,7 @@ function renderHints() {
 function stepSpecLabel() {
   if (state.size === CUSTOM_KEY) return `自定义 ${state.customDraft.w}×${state.customDraft.h}`;
   // 用与卡片、色卡同一套显示口径，免得引导念的名字屏幕上找不到
-  return `${shortName(state.size)} · ${String(state.color).replace('色', '')}`;
+  return `${shortName(state.size)} · ${colorName(state.color)}`;
 }
 
 function renderSteps() {
@@ -520,7 +561,7 @@ function renderSpecs() {
   }).join('') + customCard;
 
   $('moreSpecs').innerHTML = '<option value="">更多规格…</option>' +
-    rest.map(p => `<option value="${escapeAttr(p.name)}">${p.name} · ${p.w}×${p.h}</option>`).join('');
+    rest.map(p => `<option value="${escapeAttr(p.name)}">${p.label || p.name} · ${p.w}×${p.h}</option>`).join('');
 
   $('specs').querySelectorAll('.spec[data-size]').forEach(btn => {
     btn.addEventListener('click', () => selectSize(btn.dataset.size));
@@ -529,8 +570,27 @@ function renderSpecs() {
   syncSpecActive();
 }
 
+function catalogLabel(kind, canonical) {
+  /* 显示名只用服务端给的 label；canonical 值（name）不参与显示以外的任何事也不本地化
+     。查不到就退回原名，宁显示中文也不显示 undefined。 */
+  const list = (state.catalog || {})[kind] || [];
+  const hit = list.find(x => x.name === canonical);
+  return hit && hit.label ? hit.label : canonical;
+}
+
+function isEn() {
+  return !!(window.I18N && I18N.lang === 'en');
+}
+
 function shortName(name) {
+  if (isEn()) return catalogLabel('photos', name);
   return name.replace(' (证件照)', '').replace(' (标准2寸)', '').replace('中国', '');
+}
+
+function colorName(name) {
+  // 中文态沿用了很久的短路：色卡上只写「蓝」不写「蓝色」；英文态直接用 label
+  if (isEn()) return catalogLabel('colors', name);
+  return String(name).replace('色', '');
 }
 
 function fmtMm(v) {
@@ -555,7 +615,7 @@ function renderColors() {
   $('colors').innerHTML = state.catalog.colors.map(c =>
     `<div class="sw-item" data-color="${escapeAttr(c.name)}">
        <span class="sw-col" style="background:${c.hex}"></span>
-       <span>${c.name.replace('色', '')}</span>
+       <span>${colorName(c.name)}</span>
      </div>`).join('');
   $('colors').querySelectorAll('.sw-item').forEach(el => {
     el.addEventListener('click', () => {
@@ -577,7 +637,7 @@ function syncColorActive() {
 
 function renderSheets() {
   $('sheetSel').innerHTML = state.catalog.sheets.map(s =>
-    `<option value="${escapeAttr(s.name)}" ${s.name === state.sheet ? 'selected' : ''}>${s.name} · ${s.w}×${s.h}</option>`
+    `<option value="${escapeAttr(s.name)}" ${s.name === state.sheet ? 'selected' : ''}>${s.label || s.name} · ${s.w}×${s.h}</option>`
   ).join('');
 }
 
@@ -591,7 +651,7 @@ function recomputeLayout() {
   // 但一张都放不下——不说清楚的话，用户点了生成才看到上游的报错。
   if (photo.w > paper.w || photo.h > paper.h) {
     state.layout = { rows: 1, cols: 1, count: 1, util: 0 };
-    $('layoutInfo').textContent = `${state.sheet} · 放不下`;
+    $('layoutInfo').textContent = `${catalogLabel('sheets', state.sheet)} · 放不下`;
     $('layoutCount').textContent = '请改用单张';
     $('footDpi').textContent = `${photo.dpi} dpi`;
     return;
@@ -602,7 +662,7 @@ function recomputeLayout() {
   const util = (cols * photo.w * rows * photo.h) / (paper.w * paper.h);
   state.layout = { rows, cols, count: rows * cols, util };
 
-  $('layoutInfo').textContent = `${state.sheet} · ${cols}×${rows}`;
+  $('layoutInfo').textContent = `${catalogLabel('sheets', state.sheet)} · ${cols}×${rows}`;
   $('layoutCount').textContent = `${rows * cols} 张 · ${Math.round(util * 100)}% 利用`;
   $('footDpi').textContent = `${photo.dpi} dpi`;
 }
@@ -1192,6 +1252,7 @@ function bind() {
   bindGuide();
   $('dropzone').addEventListener('click', () => $('fileInput').click());
   $('railImport').addEventListener('click', () => $('fileInput').click());
+  $('railTheme').addEventListener('click', toggleTheme);
   $('fileInput').addEventListener('change', e => acceptFile(e.target.files[0]));
 
   ['dragenter', 'dragover'].forEach(ev =>
@@ -1332,10 +1393,10 @@ async function waitForService() {
 
       if (status === 503 && data.loading) {
         hideSetup();
-        bootText(`正在加载模型… ${elapsed.toFixed(0)}s`);
+        bootText(`正在加载 AI 模型… ${elapsed.toFixed(0)}s`);
         if (!hinted && elapsed > 6) {
           hinted = true;
-          bootHint('首次启动要加载三个模型，大约需要 15 秒，之后每张图只需几秒。');
+          bootHint('首次启动要加载三个 AI 模型，大约需要 15 秒，之后每张图只需几秒。');
         }
         await sleep(600);
         continue;
@@ -1372,6 +1433,16 @@ async function waitForService() {
     state.version = data.version || '';
     renderAboutVersion();
     state.catalog = data.catalog;
+    // 界面语言：把 state 与重渲染交给 lang.js，它按 data.language_effective 扫一遍 DOM
+    if (window.applyServerLanguage) {
+      applyServerLanguage(data, {
+        state,
+        render: () => {
+          renderRail(); renderHints(); renderSpecs(); renderColors(); renderSheets();
+          recomputeLayout(); syncMode();
+        },
+      });
+    }
     state.presets = data.presets || [];
     state.customSizes = data.custom_sizes || [];
     const preset = state.presets.find(p => p.id === data.default_preset) || state.presets[0];
@@ -1400,7 +1471,7 @@ async function waitForService() {
     bind();
     $('run').disabled = true;
     $('sub').textContent = '先拖入一张照片';
-    setStatus('模型已就绪', '');
+    setStatus('AI 模型已就绪', '');
     renderSteps();
     renderPrefsWarn();
     // 第一次（服务端什么都没存过）把旧浏览器键搬过去；旧键不删

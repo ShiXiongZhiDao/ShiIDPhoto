@@ -24,7 +24,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from portable_checks import (  # noqa: E402
-    LAUNCHER_BAT,
+    LAUNCHER_BATS,
     CheckError,
     format_issues,
     has_error,
@@ -232,7 +232,7 @@ def copy_models(staging: Path, manifest: dict, resolved: dict[str, Path], tier: 
 
 
 def copy_shell(staging: Path) -> None:
-    for name in ("launcher.py", "portable_checks.py", LAUNCHER_BAT):
+    for name in ("launcher.py", "portable_checks.py", *LAUNCHER_BATS):
         shutil.copy2(ROOT / name, staging / name)
     for name in ("config", "licenses", "shell"):
         shutil.copytree(ROOT / name, staging / name)

@@ -134,22 +134,22 @@ def build_plan(root: Path, home: Path, manifest: dict, assets_doc: dict, tier: s
 
         asset = by_id.get(str(entry.get("asset_id") or ""))
         if asset is None:
-            raise AssetError(f"模型「{model_id}」没有下载来源（manifest 缺少 asset_id 或 assets.json 无此资产）")
+            raise AssetError(f"AI 模型「{model_id}」没有下载来源（manifest 缺少 asset_id 或 assets.json 无此资产）")
 
         asset_size = int(asset.get("size_bytes") or 0)
         asset_hash = str(asset.get("sha256") or "").lower()
         if asset_size != expected_size or asset_hash != expected_hash:
             raise AssetError(
-                f"模型「{model_id}」在 model-manifest 与 assets.json 中的大小/哈希不一致，拒绝下载"
+                f"AI 模型「{model_id}」在 model-manifest 与 assets.json 中的大小/哈希不一致，拒绝下载"
             )
 
         tiers = asset.get("tiers")
         if tiers and tier not in tiers:
-            raise AssetError(f"模型「{model_id}」不属于 {tier} 档，不能在此时安装")
+            raise AssetError(f"AI 模型「{model_id}」不属于 {tier} 档，不能在此时安装")
 
         urls = tuple(str(url) for url in asset.get("urls") or [] if str(url).strip())
         if not urls:
-            raise AssetError(f"模型「{model_id}」的资产条目没有下载地址")
+            raise AssetError(f"AI 模型「{model_id}」的资产条目没有下载地址")
 
         missing.append(
             Asset(
@@ -267,7 +267,7 @@ def write_local(data: bytes, plan: Plan) -> Asset:
                 raise AssetError("写入后校验失败，磁盘可能有问题")
             temp.replace(home / asset.filename)
             return asset
-    raise AssetError("这个文件与所需模型都对不上：大小或 sha256 不符")
+    raise AssetError("这个文件与所需 AI 模型都对不上：大小或 sha256 不符")
 
 
 def _fetch(url: str, part: Path, size: int, progress: Progress | None, cancelled: CancelCheck | None,

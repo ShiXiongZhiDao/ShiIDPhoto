@@ -4,8 +4,8 @@
 不处理任何图像逻辑，不修改上游代码。
 
 用法：
-    双击 `启动师兄证照.bat`（正常启动）
-    python launcher.py --check-only   （只自检，不启动）
+    双击 `双击启动师兄证照.bat`（英文名 `Launch-ShiIDPhoto.bat`，两份内容逐字相同）
+    python launcher.py --check-only   （只自检，不启动；这条路径保留全部提示，供验收与排查）
 """
 from __future__ import annotations
 
@@ -23,6 +23,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "shell"))  # 语言层与包内用的是同一份词条表，别在这里抄第二份
+
+import i18n  # noqa: E402  (依赖上面两行 sys.path；它只用标准库)
 
 from portable_checks import (  # noqa: E402  (必须在 sys.path 调整之后导入)
     HEALTH_UA,
@@ -43,6 +46,33 @@ LOG_KEEP = 3
 # 兜底值用无品牌的中性词：配置读不出来时宁可标题朴素，也不要印出一个作废的旧名字。
 BRAND: dict = {"title": "证件照工具", "latin": "photo", "tagline": ""}
 
+#: 界面语言：启动器只 stdlib，`shell/` 不在它的 sys.path 上，
+#: 所以下面显式加一次——`shell/i18n.py` 本身也只用标准库，不破这条约束。
+PREFS_PATH = ROOT / "user-data" / "prefs.json"
+
+
+def init_language(config: dict) -> None:
+    """定这次控制台的语种：prefs 显式值 > config 的 webui.lang > 系统 UI language。
+
+    启动失败时界面根本不会出现，所以这句话必须在这条路径上自己成立——
+    它不能等 `/api/state`，只能自己读文件（既有约定的那条独立路径）。
+    """
+    intent = None
+    try:
+        doc = json.loads(PREFS_PATH.read_text(encoding="utf-8"))
+        if isinstance(doc, dict):
+            intent = doc.get("language")
+    except (OSError, ValueError):
+        intent = None
+    cfg_lang = (config.get("webui", {}) or {}).get("lang") if isinstance(config, dict) else None
+    _intent, effective = i18n.resolve(intent, cfg_lang)
+    i18n.set_lang(effective)
+
+
+def brand_name() -> str:
+    """英文态用已签的拉丁名，不硬塞汉字（既有约定的分层 + 0022 决策 16）。"""
+    return BRAND["latin"] if i18n.LANG == "en" else BRAND["title"]
+
 
 def set_brand(config: dict) -> None:
     """把 config 里的品牌字段搬进 BRAND；缺哪个就退到中性值，不崩。"""
@@ -53,16 +83,18 @@ def set_brand(config: dict) -> None:
 
 def brand_title(stage: str) -> str:
     """控制台标题统一成「品牌 · 阶段」。"""
-    return f"{BRAND['title']} · {stage}"
+    return f"{brand_name()} · {i18n.out(stage)}"
 
 
 def brand_banner() -> str:
-    """启动横幅与窗口初始标题那行字。"""
+    """启动横幅与窗口初始标题那行字。英文态 tagline 留空（决策 16）。"""
+    if i18n.LANG == "en":
+        return BRAND["latin"]
     return " ".join(part for part in (BRAND["title"], BRAND["tagline"]) if part)
 
 
 def say(message: str = "") -> None:
-    print(message, flush=True)
+    print(i18n.out(message), flush=True)
 
 
 _TTY = sys.stdout.isatty()
@@ -76,6 +108,7 @@ def progress(text: str, elapsed: float, interval: float = 3.0) -> None:
     把日志里真正有用的上下文冲掉。这种情况下改成每 interval 秒记一行。
     """
     global _progress_last
+    text = i18n.out(text)      # 传进来的就是那几个中文阶段名，词条里有它们
     if _TTY:
         sys.stdout.write("\r" + f"  {text}… {elapsed:4.1f}s")
         sys.stdout.flush()
@@ -182,13 +215,20 @@ def rotate_log(log_path: Path) -> None:
 
 
 SESSION_MARK = "===== 启动 "
+LOG_NOTE_PREFIX = "[自检] "
 
 
-def start_log_session(log_path: Path) -> None:
-    """每次启动写一条分隔线，失败时只展示本次记录，不把上次的成功日志混进来。"""
+def start_log_session(log_path: Path, notes: list[str] | None = None) -> None:
+    """每次启动写一条分隔线，失败时只展示本次记录，不把上次的成功日志混进来。
+
+    自检备注（可选模型没装、pngquant 缺席这类）只进日志不进控制台：
+    用户看见一串「未安装 / 不可用」会以为程序坏了，排查时又确实需要这几行。
+    """
     stamp = time.strftime("%Y-%m-%d %H:%M:%S")
     with log_path.open("a", encoding="utf-8") as stream:
         stream.write(f"\n{SESSION_MARK}{stamp} =====\n")
+        for note in notes or []:
+            stream.write(f"{LOG_NOTE_PREFIX}{note}\n")
 
 
 def tail(path: Path, lines: int = 20) -> str:
@@ -331,7 +371,7 @@ def monitor_service(url: str, process: subprocess.Popen, timeout: int) -> tuple[
             if not setup_hinted:
                 setup_hinted = True
                 set_console_title(brand_title("等待首次设置"))
-                say("  首次使用：请在浏览器里完成模型下载，下载期间窗口不要关。")
+                say("  首次使用：请在浏览器里完成 AI 模型下载，下载期间窗口不要关。")
                 say("  装好后页面会自动进入主界面，不需要重开。")
             deadline = max(deadline, time.monotonic() + 3600)
             time.sleep(0.6)
@@ -342,7 +382,7 @@ def monitor_service(url: str, process: subprocess.Popen, timeout: int) -> tuple[
         if not hinted and elapsed > 8:
             hinted = True
             clear_progress()
-            say("  提示：首次启动要加载三个模型并校验，大约 20 秒，窗口不要关。")
+            say("  提示：首次启动要加载三个 AI 模型并校验，大约 20 秒，窗口不要关。")
 
         time.sleep(0.4)
 
@@ -364,6 +404,10 @@ def summarize_log(path: Path, lines: int = 5) -> str:
     for row in raw.splitlines():
         stripped = row.strip()
         if not stripped:
+            continue
+        # 自检备注是"某个可选功能没装"，不是这次失败的原因；
+        # 混进摘要会把真正的报错挤出那 5 行。完整日志里仍然留着。
+        if stripped.startswith(LOG_NOTE_PREFIX):
             continue
         if stripped.startswith("Traceback (most recent call last)"):
             continue
@@ -395,7 +439,7 @@ def report_failure(process: subprocess.Popen, log_path: Path, message: str) -> N
     say()
     say(f"  完整日志：{log_path}")
     say("  常见原因：")
-    say("    · 模型文件不完整或被安全软件隔离")
+    say("    · AI 模型文件不完整或被安全软件隔离")
     say("    · 缺少 Microsoft Visual C++ 运行库")
     say("    · 端口被其他程序或防火墙拦截")
     say("  关闭本窗口即可退出。")
@@ -409,28 +453,45 @@ def report_failure(process: subprocess.Popen, log_path: Path, message: str) -> N
             process.kill()
 
 
-def run_self_check(config: dict, python: Path, classic: bool = False) -> int:
-    """返回 0 表示通过。任何 error 都直接中止，不做降级。"""
-    say("正在自检……")
+def run_self_check(
+    config: dict, python: Path, classic: bool = False, verbose: bool = False
+) -> tuple[int, list[str]]:
+    """返回 (退出码, 自检备注)。任何 error 都直接中止，不做降级。
+
+    备注是"某个可选能力没装"这类信息，正常启动不往控制台印：用户看见
+    「可选模型未安装 / pngquant 找不到」只会以为程序坏了，而这些能力在自研
+    界面里根本没有入口（既有约定的"出声"针对的是失败，不是可选功能缺席）。
+    备注仍然逐条写进本次启动的日志，`--check-only` 时照常打印，
+    验收脚本与人工排查都不丢信息。真正的失败照旧出声，不受这里影响。
+    """
+    notes: list[str] = []
+
+    def tell(message: str) -> None:
+        notes.append(message)
+        if verbose:
+            say(f"提示：{message}")
+
+    if verbose:
+        say("正在自检……")
 
     entry = resolve_entry(config, classic)
     if not entry.is_file():
         return fail(
             f"程序文件不完整，缺少 {entry.relative_to(ROOT)}。",
             "请重新解压完整的压缩包，不要只复制 bat 文件。",
-        )
+        ), notes
     if not classic:
         index_html = ROOT / config["shell"]["static_dir"] / "index.html"
         if not index_html.is_file():
             return fail(
                 f"界面文件不完整，缺少 {index_html.relative_to(ROOT)}。",
                 "请重新解压完整的压缩包。",
-            )
+            ), notes
     if not python.is_file():
         return fail(
             f"未找到内置 Python：{python.relative_to(ROOT) if python.is_relative_to(ROOT) else python}",
             "请重新解压完整的压缩包。",
-        )
+        ), notes
 
     tier = config.get("distribution", {}).get("tier", "personal")
     bundled = bool((config.get("models") or {}).get("bundled", True))
@@ -438,30 +499,30 @@ def run_self_check(config: dict, python: Path, classic: bool = False) -> int:
     try:
         issues = validate_models(ROOT, manifest_path, tier, build_mode=False, require_files=bundled)
     except CheckError as exc:
-        return fail(str(exc))
+        return fail(str(exc)), notes
 
     if has_error(issues):
         say()
-        say("[启动失败] 模型文件不完整或已损坏：")
+        say("[启动失败] AI 模型文件不完整或已损坏：")
         say(format_issues(i for i in issues if i.severity == "error"))
         say()
-        say("请重新下载完整安装包。程序不会在运行时自动联网下载模型。")
-        return 1
+        say("请重新下载完整安装包。程序不会在运行时自动联网下载 AI 模型。")
+        return 1, notes
 
     if not bundled:
-        say("提示：模型未随包提供，首次启动会在浏览器里引导下载（约 180 MB）。")
+        tell("AI 模型未随包提供，首次启动会在浏览器里引导下载（约 180 MB）。")
 
-    warnings = [i for i in issues if i.severity == "warning"]
-    if warnings:
-        say("提示：")
-        say(format_issues(warnings))
+    for issue in issues:
+        if issue.severity == "warning":
+            tell(issue.message)
 
     pngquant = ROOT / "src" / "tool" / "ext" / "pngquant.exe"
     if not pngquant.is_file():
-        say("提示：未找到 pngquant，图片压缩功能将不可用（其余功能不受影响）。")
+        tell("未找到 pngquant，图片压缩功能将不可用（其余功能不受影响）。")
 
-    say("自检通过。")
-    return 0
+    if verbose:
+        say("自检通过。")
+    return 0, notes
 
 
 def main(argv: list[str]) -> int:
@@ -478,10 +539,12 @@ def main(argv: list[str]) -> int:
     except CheckError as exc:
         return fail(str(exc))
     set_brand(config)  # 品牌串从这里开始才可信；标题、横幅都在它之后才打印
+    init_language(config)  # 语种要在这之前定下来：下面第一句 say() 就得用对语言
 
     python = resolve_python()
-    if run_self_check(config, python, args.classic) != 0:
-        return 1
+    code, notes = run_self_check(config, python, args.classic, verbose=args.check_only)
+    if code != 0:
+        return code
 
     if args.check_only:
         return 0
@@ -542,13 +605,13 @@ def main(argv: list[str]) -> int:
     say(f"  地址：{url}")
     say(f"  日志：{log_path.relative_to(ROOT)}")
     if bool((config.get("models") or {}).get("bundled", True)):
-        say("  首次启动要加载三个模型并校验，约 20 秒。窗口不要关。")
+        say("  首次启动要加载三个 AI 模型并校验，约 20 秒。窗口不要关。")
     else:
-        say("  首次启动需要下载模型（约 180 MB），请在浏览器里完成，窗口不要关。")
+        say("  首次启动需要下载 AI 模型（约 180 MB），请在浏览器里完成，窗口不要关。")
     say(line)
     say()
 
-    start_log_session(log_path)
+    start_log_session(log_path, notes)
     with log_path.open("a", encoding="utf-8", errors="replace") as stream:
         process = subprocess.Popen(
             command,
@@ -572,7 +635,7 @@ def main(argv: list[str]) -> int:
         # 提示语也跟着改，避免日志里写着"正在打开浏览器"但实际没开。
         auto_open = bool(webui.get("open_browser", True)) and not os.environ.get("IDPHOTO_NO_BROWSER")
         say("  正在打开浏览器…" if auto_open else "  已跳过自动打开浏览器（IDPHOTO_NO_BROWSER）")
-        say("  页面若显示「正在加载模型…」，属于正常，等它转完即可。")
+        say("  页面若显示「正在加载 AI 模型…」，属于正常，等它转完即可。")
         if auto_open:
             say("  如果没有自动打开，请把上面的地址复制到浏览器。")
         say("  照片只在本机处理。关闭本窗口即停止服务。")
@@ -591,19 +654,19 @@ def main(argv: list[str]) -> int:
 
         # 继续盯着模型加载：失败要立刻报出来，而不是让用户对着死窗口猜
         if not args.classic:
-            set_console_title(brand_title("正在加载模型…"))
+            set_console_title(brand_title("正在加载 AI 模型…"))
             state, detail = monitor_service(url, process, int(webui.get("startup_timeout_seconds", 180)))
             if state == "failed":
                 set_console_title(brand_title("启动失败"))
-                report_failure(process, log_path, detail or "模型加载失败。")
+                report_failure(process, log_path, detail or "AI 模型加载失败。")
                 return 1
             if state == "timeout":
                 set_console_title(brand_title("启动失败"))
-                report_failure(process, log_path, "模型加载超时。")
+                report_failure(process, log_path, "AI 模型加载超时。")
                 return 1
 
         set_console_title(brand_title("运行中"))
-        say("  模型已加载完成，可以开始用了。")
+        say("  AI 模型已加载完成，可以开始用了。")
         say()
 
         try:

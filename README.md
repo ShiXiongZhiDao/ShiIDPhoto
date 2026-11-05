@@ -6,7 +6,7 @@
 
 <p align="center"><strong>English</strong> · <a href="./README.zh.md">简体中文</a></p>
 
-<p align="center"><img src="https://img.shields.io/badge/license-AGPL--3.0-green" alt="AGPL-3.0 licensed"> <img src="https://img.shields.io/badge/platform-Windows%2010%2F11%20x64-blue" alt="Windows 10/11 x64"> <img src="https://img.shields.io/badge/languages-zh%20%C2%B7%20en-blue" alt="Chinese and English interface"> <img src="https://img.shields.io/badge/data-local_only-yellowgreen" alt="Local only"> <img src="https://img.shields.io/badge/models-not_bundled-orange" alt="AI model weights are not bundled"> <img src="https://img.shields.io/badge/release-v0.8.0-brightgreen" alt="Latest release v0.8.0"></p>
+<p align="center"><img src="https://img.shields.io/badge/license-AGPL--3.0-green" alt="AGPL-3.0 licensed"> <img src="https://img.shields.io/badge/platform-Windows%2010%2F11%20x64-blue" alt="Windows 10/11 x64"> <img src="https://img.shields.io/badge/languages-zh%20%C2%B7%20en-blue" alt="Chinese and English interface"> <img src="https://img.shields.io/badge/data-local_only-yellowgreen" alt="Local only"> <img src="https://img.shields.io/badge/models-not_bundled-orange" alt="AI model weights are not bundled"> <img src="https://img.shields.io/badge/release-v0.9.0-brightgreen" alt="Latest release v0.9.0"></p>
 
 <p align="center"><img src="assets/screenshots/en/dark-single.jpg" alt="The main screen after generating: a one-inch ID photo on white, with the headroom and chin reference lines drawn on the canvas" width="920"></p>
 
@@ -19,9 +19,9 @@ no environment to configure, no upload. Chinese or English interface, dark or li
 The image core reuses [aoguai/LiYing](https://github.com/aoguai/LiYing); this project adds
 the launcher, the local UI, the presets, the model-licence gates and the build pipeline.
 
-> **Availability.** The interface language and the light appearance are on `master` and ship in
-> the next release; the archive currently hanging on Releases (v0.8.0) has the dark interface in
-> Chinese only. Everything else below works in v0.8.0.
+> **Availability.** Everything below is in the archive on Releases: v0.9.0 adds the interface
+> language switch, the light appearance, the project icon and the two launcher names. What English
+> mode deliberately leaves in Chinese is listed under *What it does*.
 
 ## What it does
 
@@ -37,8 +37,8 @@ the launcher, the local UI, the presets, the model-licence gates and the build p
   *Follow system → 中文 → English*, and the first-run screen has the same three choices spelled
   out. It switches immediately — no restart, no reload, and a photo already on the canvas stays
   there. Panel headings, buttons, reference-line tags, the guided tour, backend messages and the
-  launch console all go English. What is still Chinese in English mode, as measured: the six size
-  cards and the ten colour names (the *More sizes* dropdown shows the English ones). What stays
+  launch console all go English, and so do the six size cards and the ten colour names — they come
+  from upstream's English catalogue, checked row-for-row against the Chinese one. What stays
   Chinese on purpose: exported file names — they are the link between a file and the size it was
   made at. The default is *Follow system*: on startup the service reads the Windows UI language
   and picks Chinese for `zh*`, English for anything else.
@@ -129,9 +129,8 @@ many, or you would rather not send your face anywhere.
 ## Screenshots
 
 These are the English screens; the same four states shot in Chinese sit next door in
-[README.zh.md](./README.zh.md). Headings, buttons and hints are English here, while the six size
-cards and the colour names stay Chinese in this build — see *What it does* for exactly what is
-translated.
+[README.zh.md](./README.zh.md). Headings, buttons, hints, size cards and colour names are all
+English here — see *What it does* for exactly what is translated.
 
 ### The main screen
 
@@ -207,7 +206,7 @@ Full policy: [PRIVACY.md](./PRIVACY.md).
 
 ## How to install
 
-1. Download `ShiIDPhoto-Portable-v0.8.0-win-x64-personal-slim.zip` (about 147 MB) from
+1. Download `ShiIDPhoto-Portable-v0.9.0-win-x64-personal-slim.zip` (about 147 MB) from
    [Releases](https://github.com/ShiXiongZhiDao/ShiIDPhoto/releases), together with the
    `.sha256` file next to it.
 2. Unzip it into a folder **you intend to keep** — for example `D:\IDPhoto`. Do not run it from
@@ -254,9 +253,9 @@ The language button on the left rail cycles *Follow system → 中文 → Englis
 screen has the same three choices as buttons. It applies immediately — no restart, no reload,
 and a photo already loaded stays loaded. Panel headings, buttons, the reference-line tags, the
 guided tour, backend messages and the launch console all switch — that console is what you read
-first when something goes wrong. Two gaps in this build, measured rather than intended: the six
-size cards and the ten colour names stay Chinese (the *More sizes* dropdown does show `One Inch`,
-`White`). What stays Chinese on purpose: exported file names (they encode the size and colour as
+first when something goes wrong. The six size cards and the ten colour names switch too (`One Inch`,
+`White`) — they come from upstream's English catalogue, checked row-for-row against the Chinese one.
+What stays Chinese on purpose: exported file names (they encode the size and colour as
 the contract knows them), the shipped user guide
 ([`docs/PORTABLE_USER_GUIDE.md`](docs/PORTABLE_USER_GUIDE.md)), and raw upstream errors, which
 are passed through rather than paraphrased.

@@ -6,7 +6,7 @@
 
 <p align="center"><a href="./README.md">English</a> · <strong>简体中文</strong></p>
 
-<p align="center"><img src="https://img.shields.io/badge/license-AGPL--3.0-green" alt="AGPL-3.0 授权"> <img src="https://img.shields.io/badge/platform-Windows%2010%2F11%20x64-blue" alt="Windows 10/11 x64"> <img src="https://img.shields.io/badge/languages-zh%20%C2%B7%20en-blue" alt="界面中英两语"> <img src="https://img.shields.io/badge/data-local_only-yellowgreen" alt="数据只留在本机"> <img src="https://img.shields.io/badge/models-not_bundled-orange" alt="不含 AI 模型权重"> <img src="https://img.shields.io/badge/release-v0.8.0-brightgreen" alt="最新版本 v0.8.0"></p>
+<p align="center"><img src="https://img.shields.io/badge/license-AGPL--3.0-green" alt="AGPL-3.0 授权"> <img src="https://img.shields.io/badge/platform-Windows%2010%2F11%20x64-blue" alt="Windows 10/11 x64"> <img src="https://img.shields.io/badge/languages-zh%20%C2%B7%20en-blue" alt="界面中英两语"> <img src="https://img.shields.io/badge/data-local_only-yellowgreen" alt="数据只留在本机"> <img src="https://img.shields.io/badge/models-not_bundled-orange" alt="不含 AI 模型权重"> <img src="https://img.shields.io/badge/release-v0.9.0-brightgreen" alt="最新版本 v0.9.0"></p>
 
 <p align="center"><img src="assets/screenshots/zh/dark-single.jpg" alt="生成后的主界面：白底一寸照，画布上带着头顶留白线与下巴线两条参考线" width="920"></p>
 
@@ -18,8 +18,8 @@
 图像内核复用 [aoguai/LiYing](https://github.com/aoguai/LiYing)，本项目提供启动器、自研前端、
 预设、模型许可门禁与构建管线。
 
-> **能拿到哪一版**：界面语言与浅色外观在 `master` 上，随下一个版本发出；Releases 上现在挂的
-> v0.8.0 发行包只有深色 + 中文界面。下面说的其他能力 v0.8.0 都有。
+> **能拿到哪一版**：Releases 上现在挂的是 v0.9.0——界面语言切换、浅色外观、项目图标与两份入口
+> 脚本名都在这一版里。英文态故意保留中文的部分列在「它能做什么」。
 
 ## 它能做什么
 
@@ -31,7 +31,7 @@
 - **界面中英两语，点一下就换。** 左侧栏那颗语言按钮按 `跟随系统 → 中文 → English` 轮换，
   首次使用那一屏上同样给这三颗明确的选项。切换即时生效：不重启、不刷新，画布上已经放好的
   照片还在。面板小标题、按钮、参考线标签、新手引导、后端提示与启动控制台都会翻成英文；
-  **这一版还没翻到的是**六张规格卡与十个底色名（「更多规格」下拉里给的是英文名）。
+  六张规格卡与十个底色名也走英文目录（`One Inch`、`White`）——v0.9.0 英文态实测全翻。
   导出文件名故意不跟着翻：那串名字是"这张图是哪个规格"的凭据。
   默认「跟随系统」——启动时读一次 Windows 界面语言，`zh` 开头给中文，其余给英文。
 - **深浅两档。** 左侧栏一颗半填圆图标（对比度的通用符号），点一下整页换色，重启后还是你上次
@@ -102,7 +102,7 @@
 ## 界面长什么样
 
 下面这些是中文态的界面；英文态的同四屏在 [README.md](./README.md) 里，布局一模一样。
-英文态翻的是小标题、按钮与提示那一层，规格卡与底色名这一版仍是中文（见「它能做什么」）。
+英文态翻的是小标题、按钮、提示，规格卡与底色名也一起翻（见「它能做什么」）。
 
 ### 主界面
 
@@ -168,7 +168,7 @@
 ## 怎么装
 
 1. 到 [Releases](https://github.com/ShiXiongZhiDao/ShiIDPhoto/releases) 下载
-   `ShiIDPhoto-Portable-v0.8.0-win-x64-personal-slim.zip`（约 147 MB），以及旁边那个 `.sha256`。
+   `ShiIDPhoto-Portable-v0.9.0-win-x64-personal-slim.zip`（约 147 MB），以及旁边那个 `.sha256`。
 2. 解压到一个**你打算长期留着**的文件夹，例如 `D:\证件照`。不要在压缩包的预览窗口里直接双击——
    模型和成片都要写到这个文件夹旁边。
 3. 双击 `双击启动师兄证照.bat`。会出现一个黑色命令行窗口，本地服务在里面启动，浏览器自动打开页面。
@@ -189,8 +189,8 @@
 **怎么把界面切成英文？**
 左侧栏那颗语言按钮按 `跟随系统 → 中文 → English` 轮换，首次使用那一屏上也有这三颗选项。
 切下去立刻生效：不重启、不刷新，画布上的照片还在原处。翻过去的是面板小标题、按钮、
-参考线标签、新手引导、后端提示和启动控制台。**这一版没翻到的是**六张规格卡与十个底色名
-——「更多规格」下拉里给的是英文名（`One Inch`、`White`）。有些东西是故意不翻的：
+参考线标签、新手引导、后端提示和启动控制台，六张规格卡与十个底色名也在这一层里（`One Inch`、
+`White`，取自上游的英文目录，与中文表逐行对齐）。有些东西是故意不翻的：
 导出文件名（那串名字是"这张图是哪个规格"的凭据）、随包的《使用说明》
 （[`docs/PORTABLE_USER_GUIDE.md`](docs/PORTABLE_USER_GUIDE.md)），以及上游抛出来的技术错误——
 那种句子照原文透传，翻歪了比不翻更难查。
@@ -219,10 +219,6 @@
 
 **端口被占了怎么办？**
 启动器从 7860 往上试到 7899，取第一个空端口，并用那个地址打开浏览器。不用你配置。
-
-**为什么界面只有中文？**
-v0.8.0 是一个围绕中文证件照规格做的单语工具，规格名和底色名来自上游的中文表，没有语言开关。
-使用说明也只有中文：[`docs/PORTABLE_USER_GUIDE.md`](docs/PORTABLE_USER_GUIDE.md)。
 
 **成片存在哪？**
 `user-data\output`，右下角那颗「打开文件夹」直接过去。页面里的「下载所选」走浏览器下载。
